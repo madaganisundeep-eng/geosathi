@@ -852,6 +852,10 @@ function showCoord(lat,lon){if(!isFinite(lat)||!isFinite(lon)||Math.abs(lat)>84)
   const u=toUTM(lat,lon);$("#cLat").value=lat.toFixed(6);$("#cLon").value=lon.toFixed(6);$("#cZone").value=u.zone;$("#cHem").value=u.hem;$("#cE").value=u.E.toFixed(2);$("#cN").value=u.N.toFixed(2);$("#cDms").value=dmsPair(lat,lon);
   $("#cOut").innerHTML=ro("Decimal degrees",`${lat.toFixed(6)}, ${lon.toFixed(6)}`,{sz:15})+ro("DMS",dmsPair(lat,lon),{sz:14})+ro("UTM",`${u.zone}${u.hem} ${u.E.toFixed(1)} E<br>${u.N.toFixed(1)} N`,{sz:15,hl:true})+
   `<div class="ro"><span class="k">Open in maps</span><span class="v" style="font-size:14px"><a href="https://www.google.com/maps?q=${lat.toFixed(6)},${lon.toFixed(6)}" target="_blank" rel="noopener">Google Maps</a> · <a href="https://bhukosh.gsi.gov.in/Bhukosh/MapViewer.aspx" target="_blank" rel="noopener">GSI Bhukosh</a></span></div>`}
+function markCBtn(id){["#cFromDD","#cFromDMS","#cFromUTM"].forEach(b=>{$(b).classList.toggle("primary",b===id);$(b).setAttribute("aria-pressed",b===id)})}
+["#cFromDD","#cFromDMS","#cFromUTM"].forEach(b=>$(b).addEventListener("click",()=>markCBtn(b)));
+["#cLat","#cLon"].forEach(i=>$(i).addEventListener("keydown",e=>{if(e.key==="Enter")$("#cFromDD").click()}));
+["#cZone","#cE","#cN"].forEach(i=>$(i).addEventListener("keydown",e=>{if(e.key==="Enter")$("#cFromUTM").click()}));
 $("#cFromDD").onclick=()=>showCoord(num("#cLat"),num("#cLon"));
 $("#cFromDMS").onclick=()=>{const p=parseDMS($("#cDms").value);p?showCoord(p.lat,p.lon):toast("Could not read the DMS text. Example: 16°18'27\"N 80°26'12\"E")};
 $("#cFromUTM").onclick=()=>{const z=num("#cZone"),E=num("#cE"),N=num("#cN");if(!(z>=1&&z<=60)||!isFinite(E)||!isFinite(N)){toast("Enter zone, easting and northing");return}const p=fromUTM(z,$("#cHem").value,E,N);showCoord(p.lat,p.lon)};
