@@ -340,11 +340,11 @@ details summary{cursor:pointer;font-weight:600;font-size:14px}
       <div class="panel">
         <h3>Single point</h3>
         <div class="fgrid">
-          <div class="f"><label for="cLat">Latitude (DD)</label><input id="cLat" type="number" step="0.000001" value="15.8281"></div>
-          <div class="f"><label for="cLon">Longitude (DD)</label><input id="cLon" type="number" step="0.000001" value="76.5290"></div>
+          <div class="f"><label for="cLat">Latitude (DD)</label><input id="cLat" type="number" step="0.000001" value="16.305167"></div>
+          <div class="f"><label for="cLon">Longitude (DD)</label><input id="cLon" type="number" step="0.000001" value="80.428222"></div>
         </div>
         <div class="fgrid">
-          <div class="f"><label for="cDms">Or DMS</label><input id="cDms" type="text" placeholder="16°18'27&quot;N 80°26'12&quot;E"></div>
+          <div class="f"><label for="cDms">Or DMS</label><input id="cDms" type="text" placeholder="16°18'18.6&quot;N 80°25'41.6&quot;E"></div>
         </div>
         <div class="fgrid">
           <div class="f"><label for="cZone">UTM zone</label><input id="cZone" type="number" min="1" max="60"></div>
@@ -357,13 +357,18 @@ details summary{cursor:pointer;font-weight:600;font-size:14px}
       </div>
       <div class="panel">
         <h3>List of points</h3>
-        <p class="small muted">One point per line: <span class="mono">name, latitude, longitude</span> (name optional). Results come out as UTM in the zone of each point.</p>
-        <textarea id="cBatch">BH-01, 15.8281, 76.5290
-BH-02, 15.8302, 76.5317
-BH-03, 15.8264, 76.5341
-OC-07, 16.3075, 80.4365</textarea>
-        <div class="row"><button class="btn primary" id="cBatchGo" type="button">Convert list</button><button class="btn" id="cBatchCopy" type="button">Copy result</button></div>
-        <div class="tablewrap"><table class="data" id="cBatchT"><thead><tr><th>Name</th><th class="n">Zone</th><th class="n">Easting</th><th class="n">Northing</th><th class="n">DMS</th></tr></thead><tbody></tbody></table></div>
+        <div class="fgrid">
+          <div class="f"><label for="cBMode">Your list is in</label><select id="cBMode"><option value="utm">Easting, Northing (UTM)</option><option value="ll">Latitude, Longitude</option></select></div>
+          <div class="f"><label for="cBZone">UTM zone</label><input id="cBZone" type="number" min="1" max="60" value="44"></div>
+          <div class="f"><label for="cBHem">Hemisphere</label><select id="cBHem"><option value="N">North</option><option value="S">South</option></select></div>
+        </div>
+        <p class="small muted" id="cBHelp">One point per line: <span class="mono">name, easting, northing</span>. Zone 43 = Karnataka, 44 = Andhra / Telangana, 36 South = eastern Zambia.</p>
+        <textarea id="cBatch">Point-1, 438917, 1802777
+BH-02, 439157, 1803052
+BH-03, 439447, 1802637
+OC-07, 438642, 1802407</textarea>
+        <div class="row"><button class="btn primary" id="cBatchGo" type="button">Convert list</button><button class="btn" id="cBatchCopy" type="button">Export CSV</button></div>
+        <div class="tablewrap"><table class="data" id="cBatchT"><thead><tr><th>Name</th><th class="n">Latitude</th><th class="n">Longitude</th><th class="n">UTM</th><th>Map</th></tr></thead><tbody></tbody></table></div>
       </div>
     </div>
   </section>
@@ -831,9 +836,16 @@ function fromUTM(zone,hem,E,Nn){const {a,e2,ep2}=WGS,k0=.9996;const e4=e2*e2,e6=
   return {lat:lat*R2D,lon:lon*R2D}}
 function toDMS(v,pos,neg){const s=v<0?neg:pos;v=Math.abs(v);let d=Math.floor(v),m=Math.floor((v-d)*60),sec=((v-d)*60-m)*60;if(sec>=59.995){sec=0;m++}if(m>=60){m=0;d++}return `${d}°${String(m).padStart(2,"0")}'${sec.toFixed(2).padStart(5,"0")}"${s}`}
 function dmsPair(lat,lon){return toDMS(lat,"N","S")+" "+toDMS(lon,"E","W")}
-function parseDMS(str){const parts=str.toUpperCase().match(/[-\d.]+\s*°?\s*(?:[\d.]+\s*['′]?\s*)?(?:[\d.]+\s*["″]?\s*)?[NSEW]?/g);if(!parts)return null;
-  const vals=parts.map(p=>{const n=p.match(/[\d.]+/g).map(Number);let v=n[0]+(n[1]||0)/60+(n[2]||0)/3600;if(/^-/.test(p.trim())||/[SW]/.test(p))v=-v;return {v,h:(p.match(/[NSEW]/)||[""])[0]}}).filter(x=>isFinite(x.v));
-  if(vals.length<2)return null;let lat=vals[0],lon=vals[1];if(lat.h==="E"||lat.h==="W")[lat,lon]=[lon,lat];return {lat:lat.v,lon:lon.v}}
+function parseDMS(str){
+  // Accepts 16°18'18.6"N 80°25'41.6"E with any quote marks, "16 18 18.6 N, 80 25 41.6 E", "N16 18.31 E80 25.69", or "16.305, 80.428"
+  const s=String(str).toUpperCase().replace(/[^0-9.\-NSEW]+/g," ").trim();if(!s)return null;
+  const toVal=n=>n[0]+(n[1]||0)/60+(n[2]||0)/3600;const nums=t=>(t.match(/-?\d+(?:\.\d+)?/g)||[]).map(Number);
+  let lat,lon;const letters=s.match(/[NSEW]/g);
+  if(letters&&letters.length>=2){const segs=/^[NSEW]/.test(s)?s.match(/[NSEW][^NSEW]*/g):s.match(/[^NSEW]*[NSEW]/g);const vals=[];
+    for(const g of segs){const h=g.match(/[NSEW]/)[0];const n=nums(g);if(!n.length)continue;let v=toVal(n.map(Math.abs));if(h==="S"||h==="W"||n[0]<0)v=-v;vals.push({v,h})}
+    for(const x of vals){if(x.h==="N"||x.h==="S")lat=x.v;else lon=x.v}
+  }else{const n=nums(s);if(n.length===2){[lat,lon]=n}else if(n.length===4){lat=toVal(n.slice(0,2));lon=toVal(n.slice(2))}else if(n.length===6){lat=toVal(n.slice(0,3));lon=toVal(n.slice(3))}}
+  if(!isFinite(lat)||!isFinite(lon)||Math.abs(lat)>90||Math.abs(lon)>180)return null;return {lat,lon}}
 
 /* ============ COORDS ============ */
 function showCoord(lat,lon){if(!isFinite(lat)||!isFinite(lon)||Math.abs(lat)>84){$("#cOut").innerHTML=ro("Error","Latitude must be between −84 and 84");return}
@@ -843,10 +855,19 @@ function showCoord(lat,lon){if(!isFinite(lat)||!isFinite(lon)||Math.abs(lat)>84)
 $("#cFromDD").onclick=()=>showCoord(num("#cLat"),num("#cLon"));
 $("#cFromDMS").onclick=()=>{const p=parseDMS($("#cDms").value);p?showCoord(p.lat,p.lon):toast("Could not read the DMS text. Example: 16°18'27\"N 80°26'12\"E")};
 $("#cFromUTM").onclick=()=>{const z=num("#cZone"),E=num("#cE"),N=num("#cN");if(!(z>=1&&z<=60)||!isFinite(E)||!isFinite(N)){toast("Enter zone, easting and northing");return}const p=fromUTM(z,$("#cHem").value,E,N);showCoord(p.lat,p.lon)};
-let batchCSV="";
-$("#cBatchGo").onclick=()=>{const rows=[];batchCSV="name,lat,lon,zone,easting,northing\n";$("#cBatch").value.split(/\n/).forEach((ln,i)=>{const p=ln.split(/[,\t;]+/).map(s=>s.trim()).filter(Boolean);if(p.length<2)return;let name=`P${i+1}`,lat,lon;if(p.length>=3&&!isFinite(+p[0])){name=p[0];lat=+p[1];lon=+p[2]}else{lat=+p[0];lon=+p[1];if(p[2])name=p[2]}if(!isFinite(lat)||!isFinite(lon))return;const u=toUTM(lat,lon);rows.push(`<tr><td>${esc(name)}</td><td class="n">${u.zone}${u.hem}</td><td class="n">${u.E.toFixed(1)}</td><td class="n">${u.N.toFixed(1)}</td><td class="n">${dmsPair(lat,lon)}</td></tr>`);batchCSV+=`${name},${lat},${lon},${u.zone}${u.hem},${u.E.toFixed(2)},${u.N.toFixed(2)}\n`});
-  $("#cBatchT tbody").innerHTML=rows.join("")||`<tr><td colspan="5" class="muted">No valid lines</td></tr>`};
-$("#cBatchCopy").onclick=()=>{if(!batchCSV)$("#cBatchGo").click();exportText("Converted points","points_utm.csv",batchCSV,"text/csv")};
+let batchCSV="";const gmap=(la,lo)=>`https://www.google.com/maps?q=${la.toFixed(6)},${lo.toFixed(6)}`;
+function setBMode(){const u=$("#cBMode").value==="utm";$("#cBZone").disabled=!u;$("#cBHem").disabled=!u;$("#cBHelp").innerHTML=u?'One point per line: <span class="mono">name, easting, northing</span>. Zone 43 = Karnataka, 44 = Andhra / Telangana, 36 South = eastern Zambia.':'One point per line: <span class="mono">name, latitude, longitude</span> in decimal degrees or DMS.'}
+$("#cBMode").onchange=()=>{setBMode();$("#cBatchGo").click()};
+$("#cBatchGo").onclick=()=>{const rows=[];const utm=$("#cBMode").value==="utm";const z=num("#cBZone"),hem=$("#cBHem").value;batchCSV="name,latitude,longitude,utm_zone,easting,northing\n";
+  $("#cBatch").value.split(/\n/).forEach((ln,i)=>{ln=ln.trim();if(!ln)return;let name=`P${i+1}`,lat,lon,E,N,zone;const parts=ln.split(/[,\t;]+/).map(x=>x.trim()).filter(Boolean);
+    if(parts.length>=3&&!/^-?\d/.test(parts[0])){name=parts[0];parts.shift()}
+    if(utm){E=+parts[0];N=+parts[1];if(!isFinite(E)||!isFinite(N)||!(z>=1&&z<=60))return;const p=fromUTM(z,hem,E,N);lat=p.lat;lon=p.lon;zone=z+hem}
+    else{const p=parseDMS(parts.join(" "));if(!p)return;lat=p.lat;lon=p.lon;const u=toUTM(lat,lon);E=u.E;N=u.N;zone=u.zone+u.hem}
+    rows.push(`<tr><td><b>${esc(name)}</b></td><td class="n">${lat.toFixed(6)}</td><td class="n">${lon.toFixed(6)}</td><td class="n">${zone} ${E.toFixed(0)} ${N.toFixed(0)}</td><td><a href="${gmap(lat,lon)}" target="_blank" rel="noopener">Open in Google Maps</a></td></tr>`);
+    batchCSV+=`${name},${lat.toFixed(6)},${lon.toFixed(6)},${zone},${E.toFixed(2)},${N.toFixed(2)}\n`});
+  $("#cBatchT tbody").innerHTML=rows.join("")||`<tr><td colspan="5" class="muted">No valid lines. Check the format above.</td></tr>`};
+$("#cBatchCopy").onclick=()=>{$("#cBatchGo").click();exportText("Converted points","points.csv",batchCSV,"text/csv")};
+$("#cDms").addEventListener("keydown",e=>{if(e.key==="Enter")$("#cFromDMS").click()});
 RENDER.coords=()=>{if(!$("#cOut").innerHTML)showCoord(num("#cLat"),num("#cLon"));if(!$("#cBatchT tbody").innerHTML)$("#cBatchGo").click()};
 
 /* ============ FIELD STATION ============ */
