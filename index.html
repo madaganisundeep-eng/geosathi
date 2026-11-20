@@ -1,0 +1,1184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GeoSathi Field Kit</title>
+<meta name="description" content="Field geology toolkit for India: compass-clinometer, field notebook, stereonet, RMR/SMR, slope stability, core logging, quarry reserves, IS 1893 seismic, grain size and unit conversion.">
+<meta name="theme-color" content="#14191e">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2314191e'/%3E%3Ccircle cx='32' cy='32' r='19' fill='none' stroke='%23e0a043' stroke-width='4'/%3E%3Cpath d='M32 15 L38 32 L32 49 L26 32Z' fill='%23e0a043'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* Layout: fixed tool rail on the left, working panels (inputs | results) on the right; rail becomes a top strip on phones */
+  --bg:#eceff1; --surface:#ffffff; --surface2:#f5f7f8; --ink:#182027; --muted:#5a6773; --line:#d3d9de;
+  --accent:#a8651a; --accent-ink:#ffffff; --accent2:#1d7a6b;
+  --ok:#2c7d4f; --warn:#b07d00; --bad:#b83a2e;
+  --display:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --body:"IBM Plex Sans","Segoe UI",Roboto,Arial,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  --radius:10px;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#11161a; --surface:#192026; --surface2:#1f272e; --ink:#e4e8eb; --muted:#93a1ac; --line:#2c363e;
+    --accent:#e0a043; --accent-ink:#1a1206; --accent2:#45b5a2;
+    --ok:#5cc28a; --warn:#e5b43c; --bad:#ef7b6c; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#11161a; --surface:#192026; --surface2:#1f272e; --ink:#e4e8eb; --muted:#93a1ac; --line:#2c363e;
+  --accent:#e0a043; --accent-ink:#1a1206; --accent2:#45b5a2;
+  --ok:#5cc28a; --warn:#e5b43c; --bad:#ef7b6c; color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--body);-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:var(--display);line-height:1.15;text-wrap:balance;margin:0}
+h1{font-size:28px;font-weight:800;letter-spacing:-.01em}
+h2{font-size:21px;font-weight:700}
+h3{font-size:15px;font-weight:700;letter-spacing:.01em}
+p{margin:0}
+a{color:var(--accent)}
+.mono,.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+
+.app{display:grid;grid-template-columns:232px minmax(0,1fr);min-height:100%}
+.rail{position:sticky;top:0;height:100vh;overflow:auto;background:var(--surface);border-right:1px solid var(--line);padding:18px 12px;display:flex;flex-direction:column;gap:18px}
+.brand{display:flex;gap:10px;align-items:center;padding:0 6px;text-decoration:none;color:var(--ink)}
+.brand svg{flex:none}
+.brand b{font-family:var(--display);font-size:19px;font-weight:800;display:block;line-height:1}
+.brand span{font-size:12px;color:var(--muted)}
+.navgroup{display:flex;flex-direction:column;gap:2px}
+.navgroup .label{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);padding:6px 10px 4px}
+.nav a{display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:8px;color:var(--ink);text-decoration:none;font-size:14px}
+.nav a:hover{background:var(--surface2)}
+.nav a.active{background:var(--accent);color:var(--accent-ink);font-weight:600}
+.nav a .ic{width:18px;text-align:center;font-family:var(--mono);font-size:12px;opacity:.85}
+.railfoot{margin-top:auto;font-size:12px;color:var(--muted);padding:0 8px;display:flex;flex-direction:column;gap:8px}
+.themebtn{align-self:flex-start}
+
+main{padding:26px clamp(16px,3vw,40px) 60px;min-width:0}
+.view{display:none;flex-direction:column;gap:18px;max-width:1180px}
+.view.active{display:flex}
+.vhead{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;justify-content:space-between}
+.vhead p{max-width:68ch;color:var(--muted);margin-top:6px}
+.cat{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--accent2);font-weight:600;margin-bottom:4px}
+
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.panel > h3{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:16px;align-items:start}
+.cols.even{grid-template-columns:1fr 1fr}
+.stack{display:flex;flex-direction:column;gap:16px;min-width:0}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end}
+.fgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px}
+.fgrid.wide{grid-template-columns:repeat(auto-fill,minmax(190px,1fr))}
+.f{display:flex;flex-direction:column;gap:4px;min-width:0}
+.f label{font-size:12.5px;color:var(--muted);font-weight:500}
+input,select,textarea{font:inherit;color:var(--ink);background:var(--surface2);border:1px solid var(--line);border-radius:7px;padding:7px 9px;min-width:0;width:100%}
+input[type=number],.monoin{font-family:var(--mono);font-variant-numeric:tabular-nums}
+textarea{font-family:var(--mono);font-size:13px;resize:vertical;min-height:120px}
+input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn{font:600 14px var(--body);border:1px solid var(--line);background:var(--surface2);color:var(--ink);padding:8px 13px;border-radius:8px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.btn:hover{border-color:var(--muted)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.big{padding:12px 18px;font-size:15px}
+.btn.danger{color:var(--bad)}
+.btn.sm{padding:5px 9px;font-size:13px}
+
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;padding:3px 9px;border-radius:999px;border:1px solid currentColor;white-space:nowrap}
+.pill::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.pill.ok{color:var(--ok)} .pill.warn{color:var(--warn)} .pill.bad{color:var(--bad)} .pill.na{color:var(--muted)}
+
+.readouts{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.ro{background:var(--surface2);border:1px solid var(--line);border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.ro .k{font-size:12px;color:var(--muted)}
+.ro .v{font-family:var(--mono);font-size:20px;font-weight:600;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.ro .v small{font-size:12px;color:var(--muted);font-weight:400}
+.ro.hl{border-color:var(--accent);box-shadow:inset 3px 0 0 var(--accent)}
+
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:8px}
+table.data{border-collapse:collapse;width:100%;font-size:13.5px}
+table.data th,table.data td{padding:7px 9px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
+table.data th{background:var(--surface2);font-weight:600;font-size:12.5px;color:var(--muted);white-space:nowrap}
+table.data td.n,table.data th.n{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums}
+table.data tr:last-child td{border-bottom:none}
+table.data input{padding:4px 6px;font-size:13px;min-width:62px}
+table.data img{width:44px;height:44px;object-fit:cover;border-radius:5px;display:block}
+
+canvas{display:block;width:100%;max-width:100%}
+.netwrap{max-width:560px;width:100%;margin:0 auto}
+.note{font-size:13px;color:var(--muted);border-left:3px solid var(--line);padding:2px 0 2px 10px}
+.note.warnnote{border-color:var(--warn)}
+.callout{background:var(--surface2);border:1px solid var(--line);border-radius:8px;padding:12px 14px;font-size:14px}
+.ref{font-size:12.5px;color:var(--muted)}
+.ref li{margin-bottom:3px}
+details summary{cursor:pointer;font-weight:600;font-size:14px}
+
+/* home */
+.hero{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:22px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:26px}
+.hero h1{font-size:clamp(28px,4vw,40px)}
+.hero p{color:var(--muted);margin-top:10px;max-width:56ch}
+.hero .row{margin-top:18px}
+.toolgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+.tool{display:flex;flex-direction:column;gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;text-decoration:none;color:var(--ink);transition:border-color .15s}
+.tool:hover{border-color:var(--accent)}
+.tool .tc{font-size:11.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--accent2);font-weight:600}
+.tool b{font-family:var(--display);font-size:16.5px}
+.tool span{font-size:13.5px;color:var(--muted)}
+.facts{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+.fact{padding:12px 14px;border-left:3px solid var(--accent2);background:var(--surface);border-radius:0 8px 8px 0;font-size:13.5px}
+.fact b{display:block;font-size:14px;margin-bottom:2px}
+
+/* field station */
+.dialwrap{display:grid;grid-template-columns:200px minmax(0,1fr);gap:16px;align-items:center}
+.sensorstate{font-size:13px}
+.capture{display:flex;flex-wrap:wrap;gap:8px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{font:600 13px var(--body);border:0;background:var(--surface2);color:var(--ink);padding:7px 12px;cursor:pointer}
+.seg button.on{background:var(--accent2);color:#fff}
+
+/* modal + toast */
+.modal{position:fixed;inset:0;background:rgba(10,14,18,.55);display:none;align-items:center;justify-content:center;padding:16px;z-index:50}
+.modal.open{display:flex}
+.modal .box{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px;max-width:720px;width:100%;max-height:90vh;display:flex;flex-direction:column;gap:12px}
+.modal textarea{min-height:240px;flex:1}
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:9px;font-size:14px;z-index:60;opacity:0;pointer-events:none;transition:opacity .2s;max-width:90vw}
+.toast.show{opacity:1}
+
+#print-area{display:none}
+@media print{
+  body{background:#fff;color:#000}
+  .rail,.noprint,.modal,.toast{display:none!important}
+  .app{display:block}
+  main{padding:0}
+  body.print-report main{display:none}
+  body.print-report #print-area{display:block}
+  .panel,.ro{border-color:#999;break-inside:avoid}
+}
+
+@media (max-width:980px){ .cols,.cols.even{grid-template-columns:1fr} .hero{grid-template-columns:1fr} }
+@media (max-width:860px){
+  .app{grid-template-columns:1fr}
+  .rail{position:sticky;top:0;height:auto;z-index:20;flex-direction:row;align-items:center;padding:10px 12px;border-right:0;border-bottom:1px solid var(--line);overflow-x:auto;gap:12px}
+  .rail .navgroup{flex-direction:row;gap:4px}
+  .rail .navgroup .label,.railfoot{display:none}
+  .nav a{white-space:nowrap;padding:6px 10px}
+  .nav a .ic{display:none}
+  .brand span{display:none}
+  main{padding-top:18px}
+  .dialwrap{grid-template-columns:1fr}
+  .dialwrap canvas{max-width:220px;margin:0 auto}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="rail noprint">
+    <a class="brand" href="#home" aria-label="GeoSathi home">
+      <svg width="34" height="34" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="var(--accent)"/><circle cx="32" cy="32" r="19" fill="none" stroke="var(--accent-ink)" stroke-width="4"/><path d="M32 15 L38 32 L32 49 L26 32Z" fill="var(--accent-ink)"/></svg>
+      <div><b>GeoSathi</b><span>Field kit for India</span></div>
+    </a>
+    <nav class="nav navgroup" aria-label="Tools">
+      <div class="label">Start</div>
+      <a href="#home" data-v="home"><span class="ic">⌂</span>Home</a>
+      <div class="label">Field</div>
+      <a href="#field" data-v="field"><span class="ic">◎</span>Field station</a>
+      <a href="#notebook" data-v="notebook"><span class="ic">≡</span>Notebook</a>
+      <a href="#coords" data-v="coords"><span class="ic">⊕</span>Coordinates</a>
+      <div class="label">Structure &amp; rock</div>
+      <a href="#stereonet" data-v="stereonet"><span class="ic">◐</span>Stereonet</a>
+      <a href="#rmr" data-v="rmr"><span class="ic">▤</span>RMR &amp; SMR</a>
+      <a href="#slope" data-v="slope"><span class="ic">◺</span>Plane failure FS</a>
+      <div class="label">Drilling &amp; mining</div>
+      <a href="#core" data-v="core"><span class="ic">▮</span>Core logging</a>
+      <a href="#quarry" data-v="quarry"><span class="ic">▱</span>Quarry reserves</a>
+      <div class="label">Engineering</div>
+      <a href="#seismic" data-v="seismic"><span class="ic">∿</span>IS 1893 seismic</a>
+      <a href="#sieve" data-v="sieve"><span class="ic">⋮</span>Grain size</a>
+      <a href="#units" data-v="units"><span class="ic">⇄</span>Unit converter</a>
+    </nav>
+    <div class="railfoot">
+      <button class="btn sm themebtn" id="themeBtn" type="button">Theme: auto</button>
+      <span>Works offline after first load when installed. Your data stays on this device.</span>
+    </div>
+  </aside>
+
+  <main>
+  <!-- ================= HOME ================= -->
+  <section class="view" id="view-home">
+    <div class="hero">
+      <div>
+        <div class="cat">Field geology · Mining · Engineering geology</div>
+        <h1>Your phone is the compass, the notebook and the calculator.</h1>
+        <p>GeoSathi turns a phone into a field station for Indian geologists. Measure dip and strike, log stations with photos, plot stereonets, rate rock masses, log drill core, estimate quarry reserves and check IS&nbsp;1893 seismic loads. Everything runs on the device, with no account and no signal needed.</p>
+        <div class="row">
+          <a class="btn primary big" href="#field">Open field station</a>
+          <a class="btn big" href="#core">Log a drill hole</a>
+        </div>
+      </div>
+      <div class="netwrap" style="max-width:300px"><canvas id="heroNet" width="300" height="300" aria-label="Example stereonet"></canvas></div>
+    </div>
+    <h2>Tools</h2>
+    <div class="toolgrid">
+      <a class="tool" href="#field"><span class="tc">Field</span><b>Field station</b><span>GPS fix, compass-clinometer from the phone sensors, planes and lineations, photos.</span></a>
+      <a class="tool" href="#notebook"><span class="tc">Field</span><b>Notebook &amp; report</b><span>Every station in one table. Export CSV, GeoJSON or KML for QGIS and Google Earth. Print a report.</span></a>
+      <a class="tool" href="#coords"><span class="tc">Field</span><b>Coordinates</b><span>Decimal degrees, DMS and UTM (WGS84), single points or a whole list.</span></a>
+      <a class="tool" href="#stereonet"><span class="tc">Structure</span><b>Stereonet &amp; kinematics</b><span>Schmidt or Wulff net, set means with Fisher statistics, pole density, planar, wedge and toppling checks.</span></a>
+      <a class="tool" href="#rmr"><span class="tc">Rock mass</span><b>RMR89 &amp; SMR</b><span>Bieniawski rating with rock-mass c and φ, and Romana slope mass rating.</span></a>
+      <a class="tool" href="#slope"><span class="tc">Slopes</span><b>Plane failure factor of safety</b><span>Hoek &amp; Bray with tension crack, water and seismic coefficient, with a section drawing.</span></a>
+      <a class="tool" href="#core"><span class="tc">Drilling</span><b>Core logging</b><span>Run-by-run recovery and RQD, strip log, grade composites, best intercepts and true thickness.</span></a>
+      <a class="tool" href="#quarry"><span class="tc">Mining plans</span><b>Quarry reserves &amp; life</b><span>Lease barrier and pit-slope losses, tonnes, m³ and brass, stripping ratio, life of mine, grid volumes.</span></a>
+      <a class="tool" href="#seismic"><span class="tc">Engineering</span><b>IS 1893 seismic</b><span>Zone factor, design spectrum, period and horizontal coefficient A<sub>h</sub> to IS 1893 (Part 1):2016.</span></a>
+      <a class="tool" href="#sieve"><span class="tc">Soils</span><b>Grain size</b><span>IS sieves to gradation curve, D10–D60, Cu, Cc, IS 1498 class and Folk &amp; Ward statistics.</span></a>
+      <a class="tool" href="#units"><span class="tc">Everyday</span><b>Unit converter</b><span>Brass, cft, gunta, cent, tola, kg/cm², g/t, slope H:V and the usual SI units.</span></a>
+    </div>
+    <div class="facts">
+      <div class="fact"><b>Made for Indian sites</b>Brass and cft, gunta and cent, IS sieves, IS 1498, IS 1893 zones, lease barriers.</div>
+      <div class="fact"><b>Standards you can cite</b>Bieniawski 1989, Romana 1985, Tomás 2007, Hoek &amp; Bray, Markland, Folk &amp; Ward, Deere.</div>
+      <div class="fact"><b>Offline first</b>Install it once from the browser menu. It keeps working in the field with no network.</div>
+      <div class="fact"><b>Your data, your device</b>Nothing is uploaded. Export whenever you like.</div>
+    </div>
+  </section>
+
+  <!-- ================= FIELD STATION ================= -->
+  <section class="view" id="view-field">
+    <div class="vhead"><div><div class="cat">Field</div><h1>Field station</h1>
+      <p>Lay the phone flat on the plane, screen up, to read dip direction and dip. For a lineation, put the long edge of the phone along the line with the top pointing down the plunge. Calibrate the compass (figure-of-eight) and keep away from hammers, vehicles and power lines.</p></div></div>
+    <div class="cols">
+      <div class="stack">
+        <div class="panel">
+          <h3>Position <span id="gpsState" class="pill na">Off</span></h3>
+          <div class="readouts">
+            <div class="ro"><span class="k">Latitude</span><span class="v" id="gLat">—</span></div>
+            <div class="ro"><span class="k">Longitude</span><span class="v" id="gLon">—</span></div>
+            <div class="ro"><span class="k">UTM (WGS84)</span><span class="v" id="gUtm" style="font-size:15px">—</span></div>
+            <div class="ro"><span class="k">Elevation · accuracy</span><span class="v" id="gAlt" style="font-size:15px">—</span></div>
+          </div>
+          <div class="row">
+            <button class="btn primary" id="gpsBtn" type="button">Start GPS</button>
+            <span class="small muted" id="gpsMsg">Or type the coordinates in the record below.</span>
+          </div>
+        </div>
+        <div class="panel">
+          <h3>Compass-clinometer <span id="senState" class="pill na">Off</span></h3>
+          <div class="dialwrap">
+            <canvas id="dial" width="200" height="200" aria-label="Compass dial"></canvas>
+            <div class="stack" style="gap:10px">
+              <div class="seg" role="group" aria-label="Measure">
+                <button type="button" id="modePlane" class="on">Plane</button><button type="button" id="modeLine">Lineation</button>
+              </div>
+              <div class="readouts">
+                <div class="ro hl"><span class="k" id="liveK">Dip direction / dip</span><span class="v" id="liveV">—</span></div>
+                <div class="ro"><span class="k" id="liveK2">Strike (right-hand rule)</span><span class="v" id="liveV2">—</span></div>
+              </div>
+              <div class="capture">
+                <button class="btn" id="senBtn" type="button">Start sensors</button>
+                <button class="btn primary" id="capBtn" type="button">Capture reading</button>
+              </div>
+              <span class="small muted" id="senMsg">Each capture averages the last 30 sensor samples.</span>
+            </div>
+          </div>
+          <div class="fgrid">
+            <div class="f"><label for="decl">Magnetic declination (°E +)</label><input id="decl" type="number" step="0.1" value="0"></div>
+            <div class="f"><label for="geoName">Geologist</label><input id="geoName" type="text" placeholder="Your name"></div>
+            <div class="f"><label for="projName">Project</label><input id="projName" type="text" placeholder="e.g. Block-II mapping"></div>
+          </div>
+          <p class="note">Declination over mainland India is small (roughly −1° to +1°). Enter the value for your area so readings are referenced to true north.</p>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>New record</h3>
+        <div class="fgrid">
+          <div class="f"><label for="rStn">Station ID</label><input id="rStn" type="text"></div>
+          <div class="f"><label for="rType">Feature</label>
+            <select id="rType"><option>Bedding (S0)</option><option>Joint</option><option>Fault</option><option>Foliation</option><option>Vein</option><option>Contact</option><option>Shear zone</option><option>Dyke</option><option>Lineation</option><option>Fold axis</option><option>No structure</option></select></div>
+          <div class="f"><label for="rSet">Set label</label><input id="rSet" type="text" placeholder="S0, J1, J2…"></div>
+          <div class="f"><label for="rA" id="rALab">Dip direction (°)</label><input id="rA" type="number" min="0" max="360" step="1"></div>
+          <div class="f"><label for="rB" id="rBLab">Dip (°)</label><input id="rB" type="number" min="0" max="90" step="1"></div>
+          <div class="f"><label for="rLat">Latitude</label><input id="rLat" type="number" step="0.000001"></div>
+          <div class="f"><label for="rLon">Longitude</label><input id="rLon" type="number" step="0.000001"></div>
+          <div class="f"><label for="rElev">Elevation (m)</label><input id="rElev" type="number" step="1"></div>
+        </div>
+        <div class="fgrid wide">
+          <div class="f"><label for="rLith">Lithology</label><input id="rLith" type="text" list="lithList" placeholder="Start typing…"></div>
+          <div class="f"><label for="rPhoto">Photo</label><input id="rPhoto" type="file" accept="image/*" capture="environment"></div>
+        </div>
+        <datalist id="lithList">
+          <option>Granite</option><option>Granite gneiss</option><option>Peninsular gneiss</option><option>Charnockite</option><option>Khondalite</option><option>Migmatite</option><option>Amphibolite</option><option>Metabasalt</option><option>Chlorite schist</option><option>Mica schist</option><option>Quartzite</option><option>Banded iron formation (BIF)</option><option>Banded haematite jasper (BHJ)</option><option>Phyllite</option><option>Slate</option><option>Marble</option><option>Limestone</option><option>Dolomite</option><option>Shale</option><option>Sandstone</option><option>Conglomerate</option><option>Deccan Trap basalt</option><option>Dolerite dyke</option><option>Pegmatite</option><option>Quartz vein</option><option>Laterite</option><option>Bauxite</option><option>Kimberlite</option><option>Alluvium</option><option>Soil</option>
+        </datalist>
+        <div class="f"><label for="rNotes">Description and notes</label><textarea id="rNotes" style="min-height:90px;font-family:var(--body);font-size:14px" placeholder="Colour, grain size, texture, minerals, alteration, weathering, sample number…"></textarea></div>
+        <div class="row"><button class="btn primary big" id="saveRec" type="button">Save to notebook</button><a class="btn" href="#notebook">Open notebook</a><span class="small muted" id="recCount"></span></div>
+        <div id="photoPrev"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= NOTEBOOK ================= -->
+  <section class="view" id="view-notebook">
+    <div class="vhead"><div><div class="cat">Field</div><h1>Field notebook</h1><p>Every saved station, newest first. Export to QGIS (CSV or GeoJSON) or Google Earth (KML), send the planes to the stereonet, or print a field report.</p></div>
+      <div class="row noprint">
+        <button class="btn" data-exp="csv" type="button">CSV</button><button class="btn" data-exp="geojson" type="button">GeoJSON</button><button class="btn" data-exp="kml" type="button">KML</button>
+        <button class="btn" id="nbToNet" type="button">Plot on stereonet</button><button class="btn primary" id="nbPrint" type="button">Print report</button>
+      </div></div>
+    <div class="readouts" id="nbStats"></div>
+    <div class="tablewrap"><table class="data" id="nbTable"><thead><tr><th>Station</th><th>Time</th><th>Feature</th><th>Set</th><th class="n">Orientation</th><th class="n">Lat</th><th class="n">Lon</th><th>Lithology</th><th>Notes</th><th>Photo</th><th></th></tr></thead><tbody></tbody></table></div>
+    <div class="row noprint"><button class="btn sm" id="nbDemo" type="button">Load example stations</button><button class="btn sm danger" id="nbClear" type="button">Delete all records</button></div>
+  </section>
+
+  <!-- ================= COORDINATES ================= -->
+  <section class="view" id="view-coords">
+    <div class="vhead"><div><div class="cat">Field</div><h1>Coordinate converter</h1><p>Convert between decimal degrees, degrees-minutes-seconds and UTM on the WGS84 datum. Mainland India spans UTM zones 42 to 47 (north).</p></div></div>
+    <div class="cols even">
+      <div class="panel">
+        <h3>Single point</h3>
+        <div class="fgrid">
+          <div class="f"><label for="cLat">Latitude (DD)</label><input id="cLat" type="number" step="0.000001" value="15.8281"></div>
+          <div class="f"><label for="cLon">Longitude (DD)</label><input id="cLon" type="number" step="0.000001" value="76.5290"></div>
+        </div>
+        <div class="fgrid">
+          <div class="f"><label for="cDms">Or DMS</label><input id="cDms" type="text" placeholder="16°18'27&quot;N 80°26'12&quot;E"></div>
+        </div>
+        <div class="fgrid">
+          <div class="f"><label for="cZone">UTM zone</label><input id="cZone" type="number" min="1" max="60"></div>
+          <div class="f"><label for="cHem">Hemisphere</label><select id="cHem"><option value="N">North</option><option value="S">South</option></select></div>
+          <div class="f"><label for="cE">Easting (m)</label><input id="cE" type="number" step="0.01"></div>
+          <div class="f"><label for="cN">Northing (m)</label><input id="cN" type="number" step="0.01"></div>
+        </div>
+        <div class="row"><button class="btn primary" id="cFromDD" type="button">From DD</button><button class="btn" id="cFromDMS" type="button">From DMS</button><button class="btn" id="cFromUTM" type="button">From UTM</button></div>
+        <div class="readouts" id="cOut"></div>
+      </div>
+      <div class="panel">
+        <h3>List of points</h3>
+        <p class="small muted">One point per line: <span class="mono">name, latitude, longitude</span> (name optional). Results come out as UTM in the zone of each point.</p>
+        <textarea id="cBatch">BH-01, 15.8281, 76.5290
+BH-02, 15.8302, 76.5317
+BH-03, 15.8264, 76.5341
+OC-07, 16.3075, 80.4365</textarea>
+        <div class="row"><button class="btn primary" id="cBatchGo" type="button">Convert list</button><button class="btn" id="cBatchCopy" type="button">Copy result</button></div>
+        <div class="tablewrap"><table class="data" id="cBatchT"><thead><tr><th>Name</th><th class="n">Zone</th><th class="n">Easting</th><th class="n">Northing</th><th class="n">DMS</th></tr></thead><tbody></tbody></table></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= STEREONET ================= -->
+  <section class="view" id="view-stereonet">
+    <div class="vhead"><div><div class="cat">Structure</div><h1>Stereonet &amp; kinematic analysis</h1><p>Lower-hemisphere projection. Enter planes as dip direction / dip, one per line, with an optional set label in front (S0, J1, J2…). Planes with the same label are averaged with Fisher statistics.</p></div>
+      <div class="row noprint"><button class="btn" id="snPrint" type="button">Print</button></div></div>
+    <div class="cols">
+      <div class="stack">
+        <div class="panel">
+          <h3>Data</h3>
+          <textarea id="snData" style="min-height:220px">S0 044/38
+S0 048/36
+S0 041/40
+S0 047/37
+S0 050/39
+J1 152/72
+J1 148/68
+J1 156/75
+J1 150/70
+J2 262/58
+J2 258/62
+J2 265/55
+J2 255/60</textarea>
+          <div class="fgrid">
+            <div class="f"><label for="snNet">Net</label><select id="snNet"><option value="schmidt">Schmidt (equal area)</option><option value="wulff">Wulff (equal angle)</option></select></div>
+            <div class="f"><label for="snShow">Show</label><select id="snShow"><option value="both">Great circles + poles</option><option value="gc">Great circles</option><option value="poles">Poles</option><option value="means">Set means only</option></select></div>
+            <div class="f"><label for="snDen">Pole density</label><select id="snDen"><option value="on">On (Schmidt)</option><option value="off">Off</option></select></div>
+          </div>
+        </div>
+        <div class="panel">
+          <h3>Slope for kinematics</h3>
+          <div class="fgrid">
+            <div class="f"><label for="snSdd">Slope dip direction (°)</label><input id="snSdd" type="number" value="60"></div>
+            <div class="f"><label for="snSdip">Slope face dip (°)</label><input id="snSdip" type="number" value="62"></div>
+            <div class="f"><label for="snPhi">Friction angle φ (°)</label><input id="snPhi" type="number" value="30"></div>
+            <div class="f"><label for="snLat">Lateral limit (°)</label><input id="snLat" type="number" value="20"></div>
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="netwrap"><canvas id="snCanvas" width="560" height="560" aria-label="Stereonet"></canvas></div>
+        <div class="row small muted" id="snLegend"></div>
+      </div>
+    </div>
+    <div class="panel"><h3>Set means</h3><div class="tablewrap"><table class="data" id="snSets"><thead><tr><th>Set</th><th class="n">N</th><th class="n">Mean dip dir / dip</th><th class="n">Strike (RHR)</th><th class="n">Fisher k</th><th class="n">α95</th></tr></thead><tbody></tbody></table></div></div>
+    <div class="cols even">
+      <div class="panel"><h3>Planar and toppling (set means)</h3><div class="tablewrap"><table class="data" id="snKin"><thead><tr><th>Set</th><th>Planar sliding</th><th>Flexural toppling</th><th class="n">Dry FS (c = 0)</th><th class="n">Poles in planar zone</th></tr></thead><tbody></tbody></table></div></div>
+      <div class="panel"><h3>Wedges (pairs of set means)</h3><div class="tablewrap"><table class="data" id="snWedge"><thead><tr><th>Pair</th><th class="n">Intersection</th><th>Wedge sliding</th><th class="n">Dry FS (c = 0)</th></tr></thead><tbody></tbody></table></div></div>
+    </div>
+    <details class="panel"><summary>Method and references</summary>
+      <ul class="ref">
+        <li>Planar: |α<sub>j</sub> − α<sub>f</sub>| ≤ lateral limit and φ &lt; ψ<sub>j</sub> &lt; ψ<sub>f</sub> (Markland 1972; Hoek &amp; Bray 1981).</li>
+        <li>Wedge: line of intersection daylights, φ &lt; ψ<sub>i</sub> &lt; apparent face dip along the trend; single-plane sliding flagged by the Hocking (1976) test. FS = K·tanφ / tanψ<sub>i</sub>, K = sinβ / sin(ξ/2).</li>
+        <li>Flexural toppling: |α<sub>j</sub> − (α<sub>f</sub>+180°)| ≤ 10° and ψ<sub>j</sub> ≥ (90° − ψ<sub>f</sub>) + φ (Goodman &amp; Bray 1976).</li>
+        <li>Fisher (1953) mean, k = (N−1)/(N−R), α95 = acos[1 − (N−R)/R·(20<sup>1/(N−1)</sup> − 1)]. Density as multiples of uniform with an exponential kernel.</li>
+      </ul>
+    </details>
+  </section>
+
+  <!-- ================= RMR / SMR ================= -->
+  <section class="view" id="view-rmr">
+    <div class="vhead"><div><div class="cat">Rock mass</div><h1>RMR89 and Slope Mass Rating</h1><p>Rate the rock mass with Bieniawski (1989), then adjust for a slope with Romana's SMR using the continuous functions of Tomás et al. (2007).</p></div><div class="row noprint"><button class="btn" data-print type="button">Print</button></div></div>
+    <div class="cols">
+      <div class="panel">
+        <h3>RMR89 parameters</h3>
+        <div class="fgrid wide">
+          <div class="f"><label for="rmStrType">A1 · Intact strength from</label><select id="rmStrType"><option value="ucs">UCS (MPa)</option><option value="is50">Point load Is(50) (MPa)</option></select></div>
+          <div class="f"><label for="rmStr">Value (MPa)</label><input id="rmStr" type="number" step="0.1" value="85"></div>
+          <div class="f"><label for="rmRqdType">A2 · RQD from</label><select id="rmRqdType"><option value="rqd">RQD (%)</option><option value="jv">Volumetric joint count Jv</option></select></div>
+          <div class="f"><label for="rmRqd">Value</label><input id="rmRqd" type="number" step="1" value="68"></div>
+          <div class="f"><label for="rmSp">A3 · Spacing of discontinuities</label><select id="rmSp"><option value="20">&gt; 2 m</option><option value="15">0.6 – 2 m</option><option value="10" selected>200 – 600 mm</option><option value="8">60 – 200 mm</option><option value="5">&lt; 60 mm</option></select></div>
+          <div class="f"><label for="rmGw">A5 · Groundwater</label><select id="rmGw"><option value="15">Completely dry</option><option value="10" selected>Damp</option><option value="7">Wet</option><option value="4">Dripping</option><option value="0">Flowing</option></select></div>
+        </div>
+        <h3>A4 · Condition of discontinuities</h3>
+        <div class="fgrid wide">
+          <div class="f"><label for="rmPer">Persistence</label><select id="rmPer"><option value="6">&lt; 1 m</option><option value="4" selected>1 – 3 m</option><option value="2">3 – 10 m</option><option value="1">10 – 20 m</option><option value="0">&gt; 20 m</option></select></div>
+          <div class="f"><label for="rmApe">Aperture</label><select id="rmApe"><option value="6">None</option><option value="5">&lt; 0.1 mm</option><option value="4" selected>0.1 – 1 mm</option><option value="1">1 – 5 mm</option><option value="0">&gt; 5 mm</option></select></div>
+          <div class="f"><label for="rmRou">Roughness</label><select id="rmRou"><option value="6">Very rough</option><option value="5">Rough</option><option value="3" selected>Slightly rough</option><option value="1">Smooth</option><option value="0">Slickensided</option></select></div>
+          <div class="f"><label for="rmInf">Infilling</label><select id="rmInf"><option value="6" selected>None</option><option value="4">Hard &lt; 5 mm</option><option value="2">Hard &gt; 5 mm</option><option value="2">Soft &lt; 5 mm</option><option value="0">Soft &gt; 5 mm</option></select></div>
+          <div class="f"><label for="rmWea">Weathering</label><select id="rmWea"><option value="6">Unweathered</option><option value="5" selected>Slightly</option><option value="3">Moderately</option><option value="1">Highly</option><option value="0">Decomposed</option></select></div>
+        </div>
+      </div>
+      <div class="stack">
+        <div class="panel">
+          <h3>Result <span id="rmPill" class="pill na">—</span></h3>
+          <div class="readouts" id="rmOut"></div>
+          <canvas id="rmBars" width="520" height="190" aria-label="RMR rating bars"></canvas>
+        </div>
+        <div class="panel">
+          <h3>SMR for a slope <span id="smPill" class="pill na">—</span></h3>
+          <div class="fgrid">
+            <div class="f"><label for="smMode">Failure mode</label><select id="smMode"><option value="planar">Planar</option><option value="toppling">Toppling</option><option value="wedge">Wedge</option></select></div>
+            <div class="f"><label for="smJdd" id="smJddL">Joint dip direction (°)</label><input id="smJdd" type="number" value="45"></div>
+            <div class="f"><label for="smJdip" id="smJdipL">Joint dip (°)</label><input id="smJdip" type="number" value="38"></div>
+            <div class="f"><label for="smSdd">Slope dip direction (°)</label><input id="smSdd" type="number" value="60"></div>
+            <div class="f"><label for="smSdip">Slope dip (°)</label><input id="smSdip" type="number" value="62"></div>
+            <div class="f"><label for="smF4">Excavation method</label><select id="smF4"><option value="15">Natural slope</option><option value="10">Presplitting</option><option value="8">Smooth blasting</option><option value="0" selected>Blasting or mechanical</option><option value="-8">Deficient blasting</option></select></div>
+          </div>
+          <div class="readouts" id="smOut"></div>
+        </div>
+      </div>
+    </div>
+    <details class="panel"><summary>Method and references</summary><ul class="ref">
+      <li>Bieniawski, Z.T. (1989). Engineering Rock Mass Classifications. Wiley. RMR89 = A1 + A2 + A3 + A4 + A5.</li>
+      <li>Palmström, A. (2005). RQD from volumetric joint count: RQD = 110 − 2.5 Jv.</li>
+      <li>Romana, M. (1985). SMR = RMR<sub>b</sub> + F1·F2·F3 + F4. Tomás, R. et al. (2007) continuous F1, F2, F3.</li>
+    </ul></details>
+  </section>
+
+  <!-- ================= SLOPE FS ================= -->
+  <section class="view" id="view-slope">
+    <div class="vhead"><div><div class="cat">Slopes</div><h1>Plane failure factor of safety</h1><p>Limit equilibrium for a block sliding on one plane, with a tension crack in the upper surface, water in the crack and on the plane, and a pseudo-static seismic coefficient (Hoek &amp; Bray 1981; Wyllie &amp; Mah 2004).</p></div><div class="row noprint"><button class="btn" data-print type="button">Print</button></div></div>
+    <div class="cols">
+      <div class="panel">
+        <h3>Geometry and strength</h3>
+        <div class="fgrid">
+          <div class="f"><label for="pfH">Slope height H (m)</label><input id="pfH" type="number" value="20" step="0.5"></div>
+          <div class="f"><label for="pfPf">Face angle ψf (°)</label><input id="pfPf" type="number" value="62"></div>
+          <div class="f"><label for="pfPp">Sliding plane dip ψp (°)</label><input id="pfPp" type="number" value="38"></div>
+          <div class="f"><label for="pfZ">Tension crack depth z (m)</label><input id="pfZ" type="number" step="0.1"></div>
+          <div class="f"><label for="pfZw">Water in crack zw (m)</label><input id="pfZw" type="number" value="2" step="0.1"></div>
+          <div class="f"><label for="pfG">Rock unit weight γr (kN/m³)</label><input id="pfG" type="number" value="26" step="0.1"></div>
+          <div class="f"><label for="pfC">Cohesion c (kPa)</label><input id="pfC" type="number" value="25"></div>
+          <div class="f"><label for="pfPhi">Friction angle φ (°)</label><input id="pfPhi" type="number" value="35"></div>
+          <div class="f"><label for="pfKh">Seismic coefficient kh</label><input id="pfKh" type="number" value="0.08" step="0.01"></div>
+        </div>
+        <p class="note">Leave crack depth blank to use the critical depth z<sub>c</sub> = H(1 − √(cotψf·tanψp)). For kh, half the IS 1893 zone factor (Z/2) is a common starting value.</p>
+      </div>
+      <div class="stack">
+        <div class="panel"><h3>Result <span id="pfPill" class="pill na">—</span></h3><div class="readouts" id="pfOut"></div></div>
+        <div class="panel"><h3>Section</h3><canvas id="pfSec" width="560" height="300" aria-label="Slope section"></canvas></div>
+        <div class="panel"><h3>Factor of safety as the crack fills with water</h3><canvas id="pfSens" width="560" height="230" aria-label="Sensitivity chart"></canvas></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= CORE ================= -->
+  <section class="view" id="view-core">
+    <div class="vhead"><div><div class="cat">Drilling</div><h1>Core logging</h1><p>Enter each run: depths, the core recovered and the total length of sound pieces 10&nbsp;cm or longer. Recovery, RQD, rock quality, composites and true thickness are calculated as you type.</p></div>
+      <div class="row noprint"><button class="btn" id="coExp" type="button">Export CSV</button><button class="btn" data-print type="button">Print</button></div></div>
+    <div class="panel">
+      <h3>Hole</h3>
+      <div class="fgrid">
+        <div class="f"><label for="coId">Hole ID</label><input id="coId" type="text" value="GS-DDH-01"></div>
+        <div class="f"><label for="coE">Collar easting (m)</label><input id="coE" type="number" value="661245"></div>
+        <div class="f"><label for="coN">Collar northing (m)</label><input id="coN" type="number" value="1750318"></div>
+        <div class="f"><label for="coRL">Collar RL (m)</label><input id="coRL" type="number" value="512"></div>
+        <div class="f"><label for="coAz">Azimuth (°)</label><input id="coAz" type="number" value="90"></div>
+        <div class="f"><label for="coDip">Inclination (° below horizontal)</label><input id="coDip" type="number" value="60"></div>
+        <div class="f"><label for="coSize">Core size</label><select id="coSize"><option>NQ (47.6 mm)</option><option>HQ (63.5 mm)</option><option>BQ (36.5 mm)</option><option>PQ (85.0 mm)</option></select></div>
+        <div class="f"><label for="coUnit">Grade unit</label><select id="coUnit"><option>g/t Au</option><option>% Cu</option><option>% Zn</option><option>% Fe</option><option>% Mn</option><option>ppm</option></select></div>
+      </div>
+    </div>
+    <div class="panel">
+      <h3>Runs <button class="btn sm noprint" id="coAdd" type="button">Add run</button></h3>
+      <div class="tablewrap"><table class="data" id="coTable"><thead><tr><th>From (m)</th><th>To (m)</th><th>Recovered (m)</th><th>Pieces ≥ 10 cm (m)</th><th>Lithology</th><th>Grade</th><th class="n">Run</th><th class="n">TCR %</th><th class="n">RQD %</th><th>Quality</th><th></th></tr></thead><tbody></tbody></table></div>
+    </div>
+    <div class="cols">
+      <div class="stack">
+        <div class="panel"><h3>Hole summary</h3><div class="readouts" id="coSum"></div></div>
+        <div class="panel">
+          <h3>Intercepts</h3>
+          <div class="fgrid">
+            <div class="f"><label for="coCut">Cut-off grade</label><input id="coCut" type="number" value="0.5" step="0.1"></div>
+            <div class="f"><label for="coVdd">Ore zone dip direction (°)</label><input id="coVdd" type="number" value="270"></div>
+            <div class="f"><label for="coVdip">Ore zone dip (°)</label><input id="coVdip" type="number" value="65"></div>
+          </div>
+          <div id="coInt" class="stack" style="gap:8px"></div>
+        </div>
+      </div>
+      <div class="panel"><h3>Strip log</h3><canvas id="coLog" width="560" height="520" aria-label="Strip log"></canvas></div>
+    </div>
+  </section>
+
+  <!-- ================= QUARRY ================= -->
+  <section class="view" id="view-quarry">
+    <div class="vhead"><div><div class="cat">Mining plans</div><h1>Quarry reserves and life of mine</h1><p>A first-pass reserve estimate for a minor-mineral or small mine lease: barrier and pit-slope losses, overburden, recovery, tonnes, m³ and brass, and the years of production the lease supports.</p></div><div class="row noprint"><button class="btn" data-print type="button">Print</button></div></div>
+    <div class="cols">
+      <div class="panel">
+        <h3>Lease and deposit</h3>
+        <div class="fgrid">
+          <div class="f"><label for="qMin">Mineral</label><select id="qMin"><option data-d="2.65">Granite / building stone</option><option data-d="2.9">Basalt (Deccan Trap)</option><option data-d="2.6">Limestone</option><option data-d="2.4">Sandstone</option><option data-d="2.2">Laterite</option><option data-d="1.9">Gravel / murrum</option><option data-d="1.6">Sand (dry, loose)</option><option data-d="2.3">Clay / brick earth</option><option data-d="2.75">Quartz / feldspar</option><option data-d="4.2">Iron ore (haematite)</option></select></div>
+          <div class="f"><label for="qArea">Lease area (ha)</label><input id="qArea" type="number" value="2" step="0.01"></div>
+          <div class="f"><label for="qPer">Lease perimeter (m)</label><input id="qPer" type="number" value="600"></div>
+          <div class="f"><label for="qBar">Safety barrier (m)</label><input id="qBar" type="number" value="7.5" step="0.5"></div>
+          <div class="f"><label for="qDep">Depth of working (m)</label><input id="qDep" type="number" value="30"></div>
+          <div class="f"><label for="qOb">Overburden / soil (m)</label><input id="qOb" type="number" value="2" step="0.1"></div>
+          <div class="f"><label for="qSl">Overall pit slope (°)</label><input id="qSl" type="number" value="45"></div>
+          <div class="f"><label for="qRho">Bulk density (t/m³)</label><input id="qRho" type="number" value="2.65" step="0.01"></div>
+          <div class="f"><label for="qRec">Recovery (%)</label><input id="qRec" type="number" value="70"></div>
+          <div class="f"><label for="qProd">Production (t / year)</label><input id="qProd" type="number" value="60000" step="1000"></div>
+        </div>
+        <h3>Benches</h3>
+        <div class="fgrid">
+          <div class="f"><label for="qBh">Bench height (m)</label><input id="qBh" type="number" value="6"></div>
+          <div class="f"><label for="qBw">Bench width (m)</label><input id="qBw" type="number" value="6"></div>
+          <div class="f"><label for="qBf">Bench face angle (°)</label><input id="qBf" type="number" value="80"></div>
+        </div>
+        <p class="note warnnote">Barrier width, bench dimensions and the reserve categories you report must follow your state's Minor Mineral Concession Rules, the MCDR and IBM guidelines. Treat this as a working estimate for the mining plan, not the statutory document.</p>
+      </div>
+      <div class="stack">
+        <div class="panel"><h3>Reserves</h3><div class="readouts" id="qOut"></div></div>
+        <div class="panel"><h3>Pit section</h3><canvas id="qSec" width="560" height="240" aria-label="Pit section"></canvas></div>
+      </div>
+    </div>
+    <div class="panel">
+      <h3>Volume between two surveys (grid of spot heights)</h3>
+      <p class="small muted">One grid point per line: <span class="mono">RL before, RL after</span> (optionally with x, y in front). Each point stands for one grid cell. Use it to check monthly despatch or royalty volumes against the pit survey.</p>
+      <div class="cols even">
+        <div class="stack">
+          <div class="f" style="max-width:200px"><label for="qGs">Grid spacing (m)</label><input id="qGs" type="number" value="10"></div>
+          <textarea id="qGrid">512.4, 506.1
+511.8, 505.9
+512.0, 504.8
+511.2, 505.0
+510.9, 506.3
+511.5, 504.2
+512.2, 505.5
+511.0, 511.0
+510.4, 510.9</textarea>
+        </div>
+        <div class="readouts" id="qGOut"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= SEISMIC ================= -->
+  <section class="view" id="view-seismic">
+    <div class="vhead"><div><div class="cat">Engineering</div><h1>IS 1893 seismic coefficient</h1><p>Design horizontal seismic coefficient A<sub>h</sub> = (Z/2)·(S<sub>a</sub>/g)·(I/R) by the equivalent static method of IS 1893 (Part 1):2016.</p></div><div class="row noprint"><button class="btn" data-print type="button">Print</button></div></div>
+    <div class="callout"><b>Which code applies.</b> BIS issued IS 1893:2025 with a new Zone VI covering the Himalayan arc, then withdrew it by gazette notification on 3 March 2026. The 2016 edition remains in force, and this tool uses it. Check for later amendments before final design.</div>
+    <div class="cols">
+      <div class="panel">
+        <h3>Site and structure</h3>
+        <div class="fgrid wide">
+          <div class="f"><label for="seZ">Seismic zone</label><select id="seZ"><option value="0.10">Zone II · Z = 0.10</option><option value="0.16" selected>Zone III · Z = 0.16</option><option value="0.24">Zone IV · Z = 0.24</option><option value="0.36">Zone V · Z = 0.36</option></select></div>
+          <div class="f"><label for="seSoil">Soil type</label><select id="seSoil"><option value="1">I · Rock or hard soil</option><option value="2" selected>II · Medium soil</option><option value="3">III · Soft soil</option></select></div>
+          <div class="f"><label for="seI">Importance factor I</label><select id="seI"><option value="1.5">1.5 · Critical and lifeline</option><option value="1.2">1.2 · Business continuity, &gt; 200 occupants</option><option value="1.0" selected>1.0 · All other buildings</option></select></div>
+          <div class="f"><label for="seR">Response reduction R</label><select id="seR"><option value="3">3.0 · RC OMRF</option><option value="5" selected>5.0 · RC SMRF</option><option value="4">4.0 · Steel OMRF</option><option value="1.5">1.5 · Unreinforced masonry</option></select></div>
+          <div class="f"><label for="seT">Building type (for period)</label><select id="seT"><option value="rc">RC frame, no infill · 0.075h^0.75</option><option value="st">Steel frame, no infill · 0.085h^0.75</option><option value="inf">Frame with masonry infill · 0.09h/√d</option><option value="man">Enter period directly</option></select></div>
+          <div class="f"><label for="seH">Height h (m)</label><input id="seH" type="number" value="15"></div>
+          <div class="f"><label for="seD">Base dimension d (m)</label><input id="seD" type="number" value="20"></div>
+          <div class="f"><label for="seTm">Period T (s)</label><input id="seTm" type="number" value="0.5" step="0.01"></div>
+          <div class="f"><label for="seW">Seismic weight W (kN), optional</label><input id="seW" type="number" value="12000"></div>
+        </div>
+      </div>
+      <div class="stack">
+        <div class="panel"><h3>Result</h3><div class="readouts" id="seOut"></div></div>
+        <div class="panel"><h3>Design spectrum, 5 % damping</h3><canvas id="seChart" width="560" height="260" aria-label="Design spectrum"></canvas></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= SIEVE ================= -->
+  <section class="view" id="view-sieve">
+    <div class="vhead"><div><div class="cat">Soils</div><h1>Grain-size analysis</h1><p>Mass retained on IS sieves to a gradation curve, characteristic diameters, the IS 1498 soil group and Folk &amp; Ward graphic statistics.</p></div><div class="row noprint"><button class="btn" data-print type="button">Print</button></div></div>
+    <div class="cols">
+      <div class="panel">
+        <h3>Sieve data</h3>
+        <div class="fgrid">
+          <div class="f"><label for="svMode">Values are</label><select id="svMode"><option value="mass">Mass retained (g)</option><option value="pass">% passing</option></select></div>
+          <div class="f"><label for="svLL">Liquid limit (%)</label><input id="svLL" type="number" placeholder="optional"></div>
+          <div class="f"><label for="svPL">Plastic limit (%)</label><input id="svPL" type="number" placeholder="optional"></div>
+        </div>
+        <div class="tablewrap"><table class="data" id="svTable"><thead><tr><th>Sieve (mm)</th><th>Value</th><th class="n">% passing</th></tr></thead><tbody></tbody></table></div>
+        <div class="row"><button class="btn sm" id="svAdd" type="button">Add sieve</button></div>
+      </div>
+      <div class="stack">
+        <div class="panel"><h3>Result <span id="svPill" class="pill ok">—</span></h3><div class="readouts" id="svOut"></div></div>
+        <div class="panel"><h3>Gradation curve</h3><canvas id="svChart" width="560" height="280" aria-label="Gradation curve"></canvas></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= UNITS ================= -->
+  <section class="view" id="view-units">
+    <div class="vhead"><div><div class="cat">Everyday</div><h1>Unit converter</h1><p>Type a value and pick its unit. Every other unit in the group updates. Includes the units used on Indian sites: brass, cft, gunta, cent, quintal, tola and kg/cm².</p></div></div>
+    <div class="cols">
+      <div class="panel">
+        <div class="fgrid">
+          <div class="f"><label for="uCat">Quantity</label><select id="uCat"></select></div>
+          <div class="f"><label for="uVal">Value</label><input id="uVal" type="number" value="1" step="any"></div>
+          <div class="f"><label for="uFrom">Unit</label><select id="uFrom"></select></div>
+        </div>
+        <div class="tablewrap"><table class="data" id="uTable"><tbody></tbody></table></div>
+      </div>
+      <div class="panel">
+        <h3>Slope angle</h3>
+        <div class="fgrid">
+          <div class="f"><label for="slDeg">Degrees</label><input id="slDeg" type="number" value="45" step="any"></div>
+          <div class="f"><label for="slPct">Percent</label><input id="slPct" type="number" step="any"></div>
+          <div class="f"><label for="slHV">H : 1 V</label><input id="slHV" type="number" step="any"></div>
+        </div>
+        <h3>Grade and metal content</h3>
+        <div class="fgrid">
+          <div class="f"><label for="gtT">Ore (t)</label><input id="gtT" type="number" value="10000"></div>
+          <div class="f"><label for="gtG">Grade (g/t)</label><input id="gtG" type="number" value="4.5" step="0.01"></div>
+          <div class="f"><label for="gtRec">Plant recovery (%)</label><input id="gtRec" type="number" value="90"></div>
+        </div>
+        <div class="readouts" id="gtOut"></div>
+      </div>
+    </div>
+  </section>
+  </main>
+</div>
+
+<div id="print-area"></div>
+<div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle"><div class="box">
+  <h2 id="modalTitle">Export</h2>
+  <p class="small muted" id="modalMsg"></p>
+  <textarea id="modalText" readonly></textarea>
+  <div class="row" id="modalBtns"></div>
+</div></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+"use strict";
+/* ============ helpers ============ */
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const D2R=Math.PI/180, R2D=180/Math.PI;
+const num=id=>{const v=parseFloat($(id).value);return isFinite(v)?v:NaN};
+const fx=(v,d=1)=>isFinite(v)?Number(v).toFixed(d):"—";
+const fint=v=>isFinite(v)?Math.round(v).toLocaleString("en-IN"):"—";
+const fgr=(v,d=2)=>isFinite(v)?Number(v).toLocaleString("en-IN",{minimumFractionDigits:d,maximumFractionDigits:d}):"—";
+const pad3=v=>String(Math.round(((v%360)+360)%360)).padStart(3,"0");
+const norm360=a=>((a%360)+360)%360;
+const angd=(a,b)=>Math.abs(((a-b)%360+540)%360-180);
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const store={get(k,d){try{const v=localStorage.getItem("geosathi."+k);return v==null?d:JSON.parse(v)}catch(e){return d}},
+  set(k,v){try{localStorage.setItem("geosathi."+k,JSON.stringify(v));return true}catch(e){return false}}};
+function toast(msg,ms=2800){const t=$("#toast");t.textContent=msg;t.classList.add("show");clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.remove("show"),ms)}
+function ro(k,v,opt={}){return `<div class="ro${opt.hl?" hl":""}"><span class="k">${k}</span><span class="v"${opt.sz?` style="font-size:${opt.sz}px"`:""}>${v}</span></div>`}
+function pill(el,cls,text){el.className="pill "+cls;el.textContent=text}
+function setupCanvas(cv,h){const w=cv.clientWidth||cv.width;const ht=h??(cv.height*w/cv.width);const r=window.devicePixelRatio||1;
+  cv.style.height=ht+"px";cv.width=Math.round(w*r);cv.height=Math.round(ht*r);const c=cv.getContext("2d");c.setTransform(r,0,0,r,0,0);return {c,w,h:ht}}
+const VIEW_ASPECT=new WeakMap();
+function canvasFor(cv){if(!VIEW_ASPECT.has(cv))VIEW_ASPECT.set(cv,cv.getAttribute("height")/cv.getAttribute("width"));const w=cv.clientWidth||+cv.getAttribute("width");return setupCanvas(cv,w*VIEW_ASPECT.get(cv))}
+
+/* export modal: download where allowed, copy always */
+function exportText(title,filename,text,mime="text/plain"){
+  $("#modalTitle").textContent=title;$("#modalText").value=text;
+  $("#modalMsg").textContent="Download the file, or copy the text and paste it into a file named "+filename+".";
+  const b=$("#modalBtns");b.innerHTML="";
+  const dl=document.createElement("button");dl.className="btn primary";dl.type="button";dl.textContent="Download "+filename;
+  dl.onclick=()=>{try{const url=URL.createObjectURL(new Blob([text],{type:mime}));const a=document.createElement("a");a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),4000);toast("If no download started, use Copy instead.")}catch(e){toast("Download is blocked here. Use Copy.")}};
+  const cp=document.createElement("button");cp.className="btn";cp.type="button";cp.textContent="Copy";
+  cp.onclick=async()=>{try{await navigator.clipboard.writeText(text);toast("Copied")}catch(e){$("#modalText").select();toast("Select all and copy by hand")}};
+  const cl=document.createElement("button");cl.className="btn";cl.type="button";cl.textContent="Close";cl.onclick=closeModal;
+  b.append(dl,cp,cl);$("#modal").classList.add("open");dl.focus();
+}
+function confirmBox(title,msg,okText,onOk){
+  $("#modalTitle").textContent=title;$("#modalMsg").textContent=msg;$("#modalText").style.display="none";
+  const b=$("#modalBtns");b.innerHTML="";
+  const ok=document.createElement("button");ok.className="btn primary";ok.type="button";ok.textContent=okText;ok.onclick=()=>{closeModal();onOk()};
+  const cl=document.createElement("button");cl.className="btn";cl.type="button";cl.textContent="Cancel";cl.onclick=closeModal;
+  b.append(ok,cl);$("#modal").classList.add("open");cl.focus();
+}
+function closeModal(){$("#modal").classList.remove("open");$("#modalText").style.display=""}
+$("#modal").addEventListener("click",e=>{if(e.target.id==="modal")closeModal()});
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeModal()});
+function doPrint(report){
+  document.body.classList.toggle("print-report",!!report);
+  try{window.print()}catch(e){}
+  setTimeout(()=>{document.body.classList.remove("print-report")},800);
+  toast("If no print window opened, printing is blocked in this preview. It works in the installed app.",4000);
+}
+$$("[data-print]").forEach(b=>b.addEventListener("click",()=>doPrint(false)));
+
+/* theme */
+const THEMES=["auto","light","dark"];
+function applyTheme(t){if(t==="auto")document.documentElement.removeAttribute("data-theme");else document.documentElement.setAttribute("data-theme",t);$("#themeBtn").textContent="Theme: "+t;setTimeout(redrawAll,30)}
+let theme=store.get("theme","auto");applyTheme(theme);
+$("#themeBtn").onclick=()=>{theme=THEMES[(THEMES.indexOf(theme)+1)%3];store.set("theme",theme);applyTheme(theme)};
+
+/* ============ geometry ============ */
+function lineVec(trend,plunge){const t=trend*D2R,p=plunge*D2R;return [Math.sin(t)*Math.cos(p),Math.cos(t)*Math.cos(p),-Math.sin(p)]} // E,N,Up
+function vecToLine(v){let [x,y,z]=v;if(z>0){x=-x;y=-y;z=-z}const l=Math.hypot(x,y,z);return {trend:norm360(Math.atan2(x,y)*R2D),plunge:Math.asin(Math.min(1,-z/l))*R2D}}
+function poleOf(dd,dip){return {trend:norm360(dd+180),plunge:90-dip}}
+function planeFromPole(t,p){return {dd:norm360(t+180),dip:90-p}}
+function cross(a,b){return [a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]]}
+function dot(a,b){return a[0]*b[0]+a[1]*b[1]+a[2]*b[2]}
+function unit(a){const l=Math.hypot(...a);return a.map(x=>x/l)}
+function intersection(p1,p2){const n1=lineVec(...Object.values(poleOf(p1.dd,p1.dip))),n2=lineVec(...Object.values(poleOf(p2.dd,p2.dip)));const c=cross(n1,n2);if(Math.hypot(...c)<1e-9)return null;return vecToLine(c)}
+function fisherMean(planes){ // planes [{dd,dip}] -> mean plane + stats using poles
+  const N=planes.length;let s=[0,0,0];
+  const ref=lineVec(poleOf(planes[0].dd,planes[0].dip).trend,poleOf(planes[0].dd,planes[0].dip).plunge);
+  planes.forEach(p=>{let v=lineVec(poleOf(p.dd,p.dip).trend,poleOf(p.dd,p.dip).plunge);if(dot(v,ref)<0)v=v.map(x=>-x);s=s.map((a,i)=>a+v[i])});
+  const R=Math.hypot(...s);const L=vecToLine(s);const pl=planeFromPole(L.trend,L.plunge);
+  let k=NaN,a95=NaN;if(N>1&&N-R>1e-9){k=(N-1)/(N-R);const c=1-(N-R)/R*(Math.pow(20,1/(N-1))-1);a95=Math.acos(Math.max(-1,Math.min(1,c)))*R2D}
+  else if(N>1){k=Infinity;a95=0}
+  return {...pl,N,R,k,a95};
+}
+
+/* ============ projection / stereonet drawing ============ */
+function proj(trend,plunge,R,type){const th=(90-plunge)*D2R;const r=type==="wulff"?R*Math.tan(th/2):R*Math.SQRT2*Math.sin(th/2);return [r*Math.sin(trend*D2R),-r*Math.cos(trend*D2R)]}
+function planePoints(dd,dip,n=90){const s=(dd-90)*D2R,d=dip*D2R,dd_=dd*D2R;const sv=[Math.sin(s),Math.cos(s),0],dv=[Math.sin(dd_)*Math.cos(d),Math.cos(dd_)*Math.cos(d),-Math.sin(d)];const pts=[];
+  for(let i=0;i<=n;i++){const a=Math.PI*i/n;const v=[sv[0]*Math.cos(a)+dv[0]*Math.sin(a),sv[1]*Math.cos(a)+dv[1]*Math.sin(a),sv[2]*Math.cos(a)+dv[2]*Math.sin(a)];const l=vecToLine(v);pts.push([l.trend,l.plunge])}return pts}
+const SETCOL=["#d9822b","#2a9d8f","#7b61c9","#c2445a","#3b7dd8","#8a9a2b","#b0662f","#2f8f5b"];
+function drawNet(cv,opts){
+  const {c,w,h}=canvasFor(cv);const cx=w/2,cy=h/2,R=Math.min(w,h)/2-28;const type=opts.type||"schmidt";
+  const ink=css("--ink"),muted=css("--muted"),line=css("--line"),surf=css("--surface"),acc=css("--accent");
+  c.clearRect(0,0,w,h);c.save();c.translate(cx,cy);
+  c.fillStyle=surf;c.beginPath();c.arc(0,0,R,0,2*Math.PI);c.fill();
+  // density
+  if(opts.density&&type==="schmidt"&&opts.poles&&opts.poles.length>2){
+    const P=opts.poles.map(p=>lineVec(p.trend,p.plunge));const N=P.length;const k=2*(1+N/9);const G=Math.max(70,Math.round(R/2.6));const cell=2*R/G;const vals=[];let sum=0,cnt=0;
+    for(let i=0;i<G;i++)for(let j=0;j<G;j++){const x=-R+(i+.5)*cell,y=-R+(j+.5)*cell;const r=Math.hypot(x,y);if(r>R)continue;const th=2*Math.asin(Math.min(1,r/R/Math.SQRT2));const pl=90-th*R2D;const tr=Math.atan2(x,-y)*R2D;const v=lineVec(tr,pl);let d=0;for(const p of P)d+=Math.exp(k*(Math.abs(dot(v,p))-1));vals.push([x,y,d]);sum+=d;cnt++}
+    const mean=sum/cnt;const levels=[1,2,4,6,8];const off=document.createElement("canvas");off.width=G;off.height=G;const ox=off.getContext("2d");const id=ox.createImageData(G,G);
+    const hex=acc.replace("#","");const rgb=hex.length===6?[0,2,4].map(i=>parseInt(hex.slice(i,i+2),16)):[200,140,60];
+    for(const [x,y,d] of vals){const m=d/mean;let lv=0;levels.forEach((L,i)=>{if(m>=L)lv=i+1});if(!lv)continue;const i=Math.floor((x+R)/cell),j=Math.floor((y+R)/cell);const k4=(j*G+i)*4;id.data[k4]=rgb[0];id.data[k4+1]=rgb[1];id.data[k4+2]=rgb[2];id.data[k4+3]=Math.round(255*(0.10+0.14*lv))}
+    ox.putImageData(id,0,0);c.save();c.beginPath();c.arc(0,0,R,0,2*Math.PI);c.clip();c.imageSmoothingEnabled=true;c.imageSmoothingQuality="high";c.drawImage(off,-R,-R,2*R,2*R);c.restore();
+    c.globalAlpha=1;opts._mud=Math.max(...vals.map(v=>v[2]))/mean;
+  }
+  // graticule
+  c.strokeStyle=line;c.lineWidth=.7;
+  for(let d=10;d<90;d+=10){[90,270].forEach(dd=>{c.beginPath();planePoints(dd,d,60).forEach(([t,p],i)=>{const [x,y]=proj(t,p,R,type);i?c.lineTo(x,y):c.moveTo(x,y)});c.stroke()})}
+  for(let a=10;a<180;a+=10){c.beginPath();let first=true;for(let i=0;i<=60;i++){const t=-Math.PI*i/60;const v=[Math.sin(a*D2R)*Math.cos(t),Math.cos(a*D2R),Math.sin(a*D2R)*Math.sin(t)];const l=vecToLine(v);const [x,y]=proj(l.trend,l.plunge,R,type);first?c.moveTo(x,y):c.lineTo(x,y);first=false}c.stroke()}
+  c.strokeStyle=muted;c.lineWidth=1.4;c.beginPath();c.arc(0,0,R,0,2*Math.PI);c.stroke();
+  c.lineWidth=1;for(let a=0;a<360;a+=10){const s=Math.sin(a*D2R),co=-Math.cos(a*D2R);const L=a%30?5:9;c.beginPath();c.moveTo(s*R,co*R);c.lineTo(s*(R+L),co*(R+L));c.stroke()}
+  c.fillStyle=ink;c.font="600 13px "+css("--body");c.textAlign="center";c.textBaseline="middle";c.fillText("N",0,-R-17);
+  c.fillStyle=muted;c.font="11px "+css("--mono");c.fillText("90",R+18,0);c.fillText("180",0,R+17);c.fillText("270",-R-18,0);
+  c.beginPath();c.moveTo(-5,0);c.lineTo(5,0);c.moveTo(0,-5);c.lineTo(0,5);c.stroke();
+  // friction circle (lines plunging > phi lie inside)
+  if(isFinite(opts.phi)){c.setLineDash([5,4]);c.strokeStyle=css("--bad");c.lineWidth=1.3;c.beginPath();c.arc(0,0,Math.abs(-proj(0,opts.phi,R,type)[1]),0,2*Math.PI);c.stroke();c.setLineDash([])}
+  // slope face
+  if(opts.slope){c.strokeStyle=ink;c.lineWidth=2.4;c.setLineDash([9,5]);c.beginPath();planePoints(opts.slope.dd,opts.slope.dip).forEach(([t,p],i)=>{const [x,y]=proj(t,p,R,type);i?c.lineTo(x,y):c.moveTo(x,y)});c.stroke();c.setLineDash([])}
+  (opts.planes||[]).forEach(pl=>{c.strokeStyle=pl.col;c.globalAlpha=pl.mean?1:.55;c.lineWidth=pl.mean?2.6:1.2;c.beginPath();planePoints(pl.dd,pl.dip).forEach(([t,p],i)=>{const [x,y]=proj(t,p,R,type);i?c.lineTo(x,y):c.moveTo(x,y)});c.stroke()});c.globalAlpha=1;
+  (opts.points||[]).forEach(pt=>{const [x,y]=proj(pt.trend,pt.plunge,R,type);c.fillStyle=pt.col;c.strokeStyle=surf;c.lineWidth=1.2;c.beginPath();
+    if(pt.shape==="tri"){c.moveTo(x,y-6);c.lineTo(x+5.5,y+4);c.lineTo(x-5.5,y+4);c.closePath()}else if(pt.shape==="sq"){c.rect(x-5,y-5,10,10)}else c.arc(x,y,pt.r||3.4,0,2*Math.PI);c.fill();c.stroke();
+    if(pt.label){c.fillStyle=ink;c.font="600 11px "+css("--body");c.textAlign="left";c.fillText(pt.label,x+7,y-7)}});
+  c.restore();return opts;
+}
+
+/* ============ router ============ */
+const VIEWS=["home","field","notebook","coords","stereonet","rmr","slope","core","quarry","seismic","sieve","units"];
+function route(){let v=location.hash.replace("#","");if(!VIEWS.includes(v))v="home";
+  $$(".view").forEach(s=>s.classList.toggle("active",s.id==="view-"+v));$$(".nav a").forEach(a=>a.classList.toggle("active",a.dataset.v===v));
+  window.scrollTo(0,0);setTimeout(()=>RENDER[v]&&RENDER[v](),0)}
+window.addEventListener("hashchange",route);
+const RENDER={};
+function redrawAll(){const v=location.hash.replace("#","")||"home";RENDER[v]&&RENDER[v]()}
+let rzT;window.addEventListener("resize",()=>{clearTimeout(rzT);rzT=setTimeout(redrawAll,150)});
+
+/* ============ HOME ============ */
+RENDER.home=()=>{drawNet($("#heroNet"),{type:"schmidt",phi:30,slope:{dd:60,dip:62},density:false,
+  planes:[{dd:45,dip:38,col:SETCOL[0],mean:true},{dd:151,dip:71,col:SETCOL[1],mean:true},{dd:260,dip:59,col:SETCOL[2],mean:true}],
+  points:[{...poleOf(45,38),col:SETCOL[0],label:"S0"},{...poleOf(151,71),col:SETCOL[1],label:"J1"},{...poleOf(260,59),col:SETCOL[2],label:"J2"}]})};
+
+/* ============ UTM ============ */
+const WGS={a:6378137,f:1/298.257223563};WGS.e2=WGS.f*(2-WGS.f);WGS.ep2=WGS.e2/(1-WGS.e2);
+function toUTM(lat,lon,forceZone){const {a,e2,ep2}=WGS,k0=.9996;const zone=forceZone||Math.floor((lon+180)/6)+1;const lon0=((zone-1)*6-180+3)*D2R;
+  const ph=lat*D2R,N=a/Math.sqrt(1-e2*Math.sin(ph)**2),T=Math.tan(ph)**2,C=ep2*Math.cos(ph)**2,A=Math.cos(ph)*(lon*D2R-lon0);
+  const e4=e2*e2,e6=e4*e2;const M=a*((1-e2/4-3*e4/64-5*e6/256)*ph-(3*e2/8+3*e4/32+45*e6/1024)*Math.sin(2*ph)+(15*e4/256+45*e6/1024)*Math.sin(4*ph)-(35*e6/3072)*Math.sin(6*ph));
+  const E=k0*N*(A+(1-T+C)*A**3/6+(5-18*T+T*T+72*C-58*ep2)*A**5/120)+500000;
+  let Nn=k0*(M+N*Math.tan(ph)*(A*A/2+(5-T+9*C+4*C*C)*A**4/24+(61-58*T+T*T+600*C-330*ep2)*A**6/720));if(lat<0)Nn+=1e7;
+  return {zone,hem:lat<0?"S":"N",E,N:Nn}}
+function fromUTM(zone,hem,E,Nn){const {a,e2,ep2}=WGS,k0=.9996;const e4=e2*e2,e6=e4*e2;const lon0=((zone-1)*6-180+3)*D2R;
+  const M=(Nn-(hem==="S"?1e7:0))/k0;const mu=M/(a*(1-e2/4-3*e4/64-5*e6/256));const e1=(1-Math.sqrt(1-e2))/(1+Math.sqrt(1-e2));
+  const p1=mu+(3*e1/2-27*e1**3/32)*Math.sin(2*mu)+(21*e1*e1/16-55*e1**4/32)*Math.sin(4*mu)+(151*e1**3/96)*Math.sin(6*mu)+(1097*e1**4/512)*Math.sin(8*mu);
+  const N1=a/Math.sqrt(1-e2*Math.sin(p1)**2),T1=Math.tan(p1)**2,C1=ep2*Math.cos(p1)**2,R1=a*(1-e2)/Math.pow(1-e2*Math.sin(p1)**2,1.5),D=(E-500000)/(N1*k0);
+  const lat=p1-(N1*Math.tan(p1)/R1)*(D*D/2-(5+3*T1+10*C1-4*C1*C1-9*ep2)*D**4/24+(61+90*T1+298*C1+45*T1*T1-252*ep2-3*C1*C1)*D**6/720);
+  const lon=lon0+(D-(1+2*T1+C1)*D**3/6+(5-2*C1+28*T1-3*C1*C1+8*ep2+24*T1*T1)*D**5/120)/Math.cos(p1);
+  return {lat:lat*R2D,lon:lon*R2D}}
+function toDMS(v,pos,neg){const s=v<0?neg:pos;v=Math.abs(v);let d=Math.floor(v),m=Math.floor((v-d)*60),sec=((v-d)*60-m)*60;if(sec>=59.995){sec=0;m++}if(m>=60){m=0;d++}return `${d}°${String(m).padStart(2,"0")}'${sec.toFixed(2).padStart(5,"0")}"${s}`}
+function dmsPair(lat,lon){return toDMS(lat,"N","S")+" "+toDMS(lon,"E","W")}
+function parseDMS(str){const parts=str.toUpperCase().match(/[-\d.]+\s*°?\s*(?:[\d.]+\s*['′]?\s*)?(?:[\d.]+\s*["″]?\s*)?[NSEW]?/g);if(!parts)return null;
+  const vals=parts.map(p=>{const n=p.match(/[\d.]+/g).map(Number);let v=n[0]+(n[1]||0)/60+(n[2]||0)/3600;if(/^-/.test(p.trim())||/[SW]/.test(p))v=-v;return {v,h:(p.match(/[NSEW]/)||[""])[0]}}).filter(x=>isFinite(x.v));
+  if(vals.length<2)return null;let lat=vals[0],lon=vals[1];if(lat.h==="E"||lat.h==="W")[lat,lon]=[lon,lat];return {lat:lat.v,lon:lon.v}}
+
+/* ============ COORDS ============ */
+function showCoord(lat,lon){if(!isFinite(lat)||!isFinite(lon)||Math.abs(lat)>84){$("#cOut").innerHTML=ro("Error","Latitude must be between −84 and 84");return}
+  const u=toUTM(lat,lon);$("#cLat").value=lat.toFixed(6);$("#cLon").value=lon.toFixed(6);$("#cZone").value=u.zone;$("#cHem").value=u.hem;$("#cE").value=u.E.toFixed(2);$("#cN").value=u.N.toFixed(2);$("#cDms").value=dmsPair(lat,lon);
+  $("#cOut").innerHTML=ro("Decimal degrees",`${lat.toFixed(6)}, ${lon.toFixed(6)}`,{sz:15})+ro("DMS",dmsPair(lat,lon),{sz:14})+ro("UTM",`${u.zone}${u.hem} ${u.E.toFixed(1)} E<br>${u.N.toFixed(1)} N`,{sz:15,hl:true})+
+  `<div class="ro"><span class="k">Open in maps</span><span class="v" style="font-size:14px"><a href="https://www.google.com/maps?q=${lat.toFixed(6)},${lon.toFixed(6)}" target="_blank" rel="noopener">Google Maps</a> · <a href="https://bhukosh.gsi.gov.in/Bhukosh/MapViewer.aspx" target="_blank" rel="noopener">GSI Bhukosh</a></span></div>`}
+$("#cFromDD").onclick=()=>showCoord(num("#cLat"),num("#cLon"));
+$("#cFromDMS").onclick=()=>{const p=parseDMS($("#cDms").value);p?showCoord(p.lat,p.lon):toast("Could not read the DMS text. Example: 16°18'27\"N 80°26'12\"E")};
+$("#cFromUTM").onclick=()=>{const z=num("#cZone"),E=num("#cE"),N=num("#cN");if(!(z>=1&&z<=60)||!isFinite(E)||!isFinite(N)){toast("Enter zone, easting and northing");return}const p=fromUTM(z,$("#cHem").value,E,N);showCoord(p.lat,p.lon)};
+let batchCSV="";
+$("#cBatchGo").onclick=()=>{const rows=[];batchCSV="name,lat,lon,zone,easting,northing\n";$("#cBatch").value.split(/\n/).forEach((ln,i)=>{const p=ln.split(/[,\t;]+/).map(s=>s.trim()).filter(Boolean);if(p.length<2)return;let name=`P${i+1}`,lat,lon;if(p.length>=3&&!isFinite(+p[0])){name=p[0];lat=+p[1];lon=+p[2]}else{lat=+p[0];lon=+p[1];if(p[2])name=p[2]}if(!isFinite(lat)||!isFinite(lon))return;const u=toUTM(lat,lon);rows.push(`<tr><td>${esc(name)}</td><td class="n">${u.zone}${u.hem}</td><td class="n">${u.E.toFixed(1)}</td><td class="n">${u.N.toFixed(1)}</td><td class="n">${dmsPair(lat,lon)}</td></tr>`);batchCSV+=`${name},${lat},${lon},${u.zone}${u.hem},${u.E.toFixed(2)},${u.N.toFixed(2)}\n`});
+  $("#cBatchT tbody").innerHTML=rows.join("")||`<tr><td colspan="5" class="muted">No valid lines</td></tr>`};
+$("#cBatchCopy").onclick=()=>{if(!batchCSV)$("#cBatchGo").click();exportText("Converted points","points_utm.csv",batchCSV,"text/csv")};
+RENDER.coords=()=>{if(!$("#cOut").innerHTML)showCoord(num("#cLat"),num("#cLon"));if(!$("#cBatchT tbody").innerHTML)$("#cBatchGo").click()};
+
+/* ============ FIELD STATION ============ */
+let gpsWatch=null,lastFix=null,senOn=false,samples=[],mode="plane",lastLive=null;
+function setGPSOut(p){const {latitude:la,longitude:lo,altitude:al,accuracy:ac}=p.coords;lastFix={lat:la,lon:lo,alt:al,acc:ac};const u=toUTM(la,lo);
+  $("#gLat").textContent=la.toFixed(6);$("#gLon").textContent=lo.toFixed(6);$("#gUtm").innerHTML=`${u.zone}${u.hem} ${u.E.toFixed(0)}<br>${u.N.toFixed(0)}`;$("#gAlt").innerHTML=`${al!=null?al.toFixed(0)+" m":"—"} · ±${ac.toFixed(0)} m`;
+  pill($("#gpsState"),ac<=10?"ok":ac<=30?"warn":"bad",ac<=10?"Good fix":ac<=30?"Fair fix":"Weak fix");
+  $("#rLat").value=la.toFixed(6);$("#rLon").value=lo.toFixed(6);if(al!=null)$("#rElev").value=al.toFixed(0)}
+$("#gpsBtn").onclick=()=>{if(gpsWatch!=null){navigator.geolocation.clearWatch(gpsWatch);gpsWatch=null;$("#gpsBtn").textContent="Start GPS";pill($("#gpsState"),"na","Off");return}
+  if(!navigator.geolocation){$("#gpsMsg").textContent="This browser has no GPS access. Type the coordinates instead.";return}
+  pill($("#gpsState"),"warn","Searching…");$("#gpsBtn").textContent="Stop GPS";
+  try{gpsWatch=navigator.geolocation.watchPosition(setGPSOut,err=>{pill($("#gpsState"),"bad","No fix");$("#gpsMsg").textContent=err.code===1?"Location permission is blocked here. Allow location for this site, or open the installed app. You can type coordinates meanwhile.":"No GPS fix yet: "+err.message;},{enableHighAccuracy:true,maximumAge:0,timeout:30000})}catch(e){pill($("#gpsState"),"bad","Blocked");$("#gpsMsg").textContent="Location is blocked in this preview. It works in the installed app."}};
+
+function orientVectors(a,b,g){const ca=Math.cos(a*D2R),sa=Math.sin(a*D2R),cb=Math.cos(b*D2R),sb=Math.sin(b*D2R),cg=Math.cos(g*D2R),sg=Math.sin(g*D2R);
+  const z=[ca*sg+sa*sb*cg, sa*sg-ca*sb*cg, cb*cg]; // device z (screen normal) in E,N,Up
+  const y=[-sa*cb, ca*cb, sb]; // device y (top edge)
+  return {z,y}}
+function onOrient(e){let a=e.alpha,b=e.beta,g=e.gamma;if(e.webkitCompassHeading!=null&&isFinite(e.webkitCompassHeading))a=360-e.webkitCompassHeading;if(a==null||b==null||g==null)return;
+  samples.push(orientVectors(a,b,g));if(samples.length>30)samples.shift();
+  if(!onOrient._abs){onOrient._abs=true;const abs=e.absolute||e.webkitCompassHeading!=null||e.type==="deviceorientationabsolute";pill($("#senState"),abs?"ok":"warn",abs?"Live · true heading":"Live · heading not absolute");if(!abs)$("#senMsg").textContent="This phone does not report an absolute heading in this browser. Dip is reliable; check azimuth with a compass."}
+  if(!onOrient._raf){onOrient._raf=requestAnimationFrame(()=>{onOrient._raf=0;updateLive()})}}
+function avgReading(){if(!samples.length)return null;let z=[0,0,0],y=[0,0,0];samples.forEach(s=>{const sz=s.z[2]<0?s.z.map(v=>-v):s.z;z=z.map((v,i)=>v+sz[i]);y=y.map((v,i)=>v+s.y[i])});
+  const decl=num("#decl")||0;z=unit(z);y=unit(y);
+  const dip=Math.acos(Math.min(1,Math.abs(z[2])))*R2D;const dd=norm360(Math.atan2(z[0],z[1])*R2D+decl);
+  const L=vecToLine(y);const heading=norm360(Math.atan2(y[0],y[1])*R2D+decl);
+  return {dd,dip,trend:norm360(L.trend+decl),plunge:L.plunge,heading}}
+function updateLive(){const r=avgReading();if(!r)return;lastLive=r;
+  if(mode==="plane"){$("#liveV").textContent=`${pad3(r.dd)} / ${fx(r.dip,0)}`;$("#liveV2").textContent=pad3(r.dd-90)}else{$("#liveV").textContent=`${fx(r.plunge,0)} → ${pad3(r.trend)}`;$("#liveV2").textContent=pad3(r.heading)}
+  drawDial(r)}
+function drawDial(r){const cv=$("#dial");const {c,w,h}=setupCanvas(cv,cv.clientWidth||200);const R=w/2-8;c.save();c.translate(w/2,h/2);
+  c.fillStyle=css("--surface2");c.beginPath();c.arc(0,0,R,0,7);c.fill();c.strokeStyle=css("--line");c.lineWidth=1.5;c.stroke();
+  const hd=r?r.heading:0;c.rotate(-hd*D2R);c.strokeStyle=css("--muted");c.fillStyle=css("--ink");c.font="600 12px "+css("--body");c.textAlign="center";c.textBaseline="middle";
+  for(let a=0;a<360;a+=10){c.save();c.rotate(a*D2R);c.lineWidth=a%90?1:2;c.beginPath();c.moveTo(0,-R);c.lineTo(0,-R+(a%30?6:11));c.stroke();if(a%90===0){c.fillStyle=a?css("--ink"):css("--bad");c.fillText(["N","E","S","W"][a/90],0,-R+22)}c.restore()}
+  c.restore();c.save();c.translate(w/2,h/2);c.fillStyle=css("--accent");c.beginPath();c.moveTo(0,-R+30);c.lineTo(8,0);c.lineTo(0,-6);c.lineTo(-8,0);c.closePath();c.fill();
+  // bubble for tilt
+  if(r){const t=Math.min(r.dip,60)/60*(R-34);const ang=(r.dd-hd)*D2R;c.fillStyle=css("--accent2");c.globalAlpha=.85;c.beginPath();c.arc(Math.sin(ang)*t,-Math.cos(ang)*t,7,0,7);c.fill();c.globalAlpha=1}
+  c.fillStyle=css("--ink");c.font="600 15px "+css("--mono");c.fillText(r?pad3(hd)+"°":"—",0,R*0.45);c.restore()}
+$("#senBtn").onclick=async()=>{if(senOn){window.removeEventListener("deviceorientationabsolute",onOrient);window.removeEventListener("deviceorientation",onOrient);senOn=false;samples=[];onOrient._abs=false;$("#senBtn").textContent="Start sensors";pill($("#senState"),"na","Off");return}
+  try{if(typeof DeviceOrientationEvent!=="undefined"&&typeof DeviceOrientationEvent.requestPermission==="function"){const p=await DeviceOrientationEvent.requestPermission();if(p!=="granted"){$("#senMsg").textContent="Motion sensor permission was refused. Allow it in Safari settings for this site.";return}}}catch(e){$("#senMsg").textContent="Motion sensors are blocked here. Open the installed app on your phone, or type readings by hand.";return}
+  if(typeof DeviceOrientationEvent==="undefined"){$("#senMsg").textContent="This device has no orientation sensor. Type readings by hand.";return}
+  const ev="ondeviceorientationabsolute" in window?"deviceorientationabsolute":"deviceorientation";window.addEventListener(ev,onOrient);senOn=true;$("#senBtn").textContent="Stop sensors";pill($("#senState"),"warn","Waiting for sensor…");
+  setTimeout(()=>{if(!samples.length){pill($("#senState"),"bad","No data");$("#senMsg").textContent="No sensor data arrived. On a laptop or in this preview that is expected. Use the app on your phone, or type readings by hand."}},2500)};
+function setMode(m){mode=m;$("#modePlane").classList.toggle("on",m==="plane");$("#modeLine").classList.toggle("on",m==="line");$("#liveK").textContent=m==="plane"?"Dip direction / dip":"Plunge → trend";$("#liveK2").textContent=m==="plane"?"Strike (right-hand rule)":"Heading of phone top";
+  $("#rALab").textContent=m==="plane"?"Dip direction (°)":"Trend (°)";$("#rBLab").textContent=m==="plane"?"Dip (°)":"Plunge (°)";if(lastLive)updateLive()}
+$("#modePlane").onclick=()=>setMode("plane");$("#modeLine").onclick=()=>setMode("line");
+$("#rType").onchange=()=>setMode(/Lineation|Fold axis/.test($("#rType").value)?"line":"plane");
+$("#capBtn").onclick=()=>{const r=avgReading();if(!r){toast("No sensor reading yet. Start sensors on your phone, or type the values.");return}
+  if(mode==="plane"){$("#rA").value=Math.round(r.dd);$("#rB").value=Math.round(r.dip)}else{$("#rA").value=Math.round(r.trend);$("#rB").value=Math.round(r.plunge)}
+  if(lastFix){$("#rLat").value=lastFix.lat.toFixed(6);$("#rLon").value=lastFix.lon.toFixed(6)}toast("Reading captured: "+$("#rA").value+" / "+$("#rB").value)};
+let pendingPhoto=null;
+$("#rPhoto").onchange=e=>{const f=e.target.files[0];if(!f)return;const img=new Image();const url=URL.createObjectURL(f);img.onload=()=>{const s=Math.min(1,640/Math.max(img.width,img.height));const cv=document.createElement("canvas");cv.width=img.width*s;cv.height=img.height*s;cv.getContext("2d").drawImage(img,0,0,cv.width,cv.height);pendingPhoto=cv.toDataURL("image/jpeg",.62);URL.revokeObjectURL(url);$("#photoPrev").innerHTML=`<img src="${pendingPhoto}" alt="Photo to attach" style="max-width:220px;border-radius:8px">`};img.src=url};
+function nextStation(){const recs=store.get("records",[]);const n=recs.reduce((m,r)=>{const k=parseInt((r.stn||"").replace(/\D/g,""));return isFinite(k)?Math.max(m,k):m},0)+1;return "S-"+String(n).padStart(3,"0")}
+$("#saveRec").onclick=()=>{const isLine=mode==="line";const a=num("#rA"),b=num("#rB");const type=$("#rType").value;
+  if(type!=="No structure"&&(!isFinite(a)||!isFinite(b)||b<0||b>90)){toast("Enter a valid orientation (0–360 and 0–90), or pick 'No structure'.");return}
+  const rec={id:Date.now(),stn:$("#rStn").value||nextStation(),time:new Date().toISOString(),type,set:$("#rSet").value.trim(),kind:isLine?"line":"plane",a:isFinite(a)?norm360(a):null,b:isFinite(b)?b:null,
+    lat:num("#rLat"),lon:num("#rLon"),elev:num("#rElev"),acc:lastFix?lastFix.acc:null,lith:$("#rLith").value,notes:$("#rNotes").value,photo:pendingPhoto};
+  const recs=store.get("records",[]);recs.push(rec);if(!store.set("records",recs)){rec.photo=null;recs[recs.length-1]=rec;if(!store.set("records",recs)){toast("Could not save: storage is full or blocked.");return}toast("Saved without photo: device storage is full.")}else toast("Saved "+rec.stn);
+  $("#rNotes").value="";$("#rPhoto").value="";pendingPhoto=null;$("#photoPrev").innerHTML="";$("#rStn").value=nextStation();updateCount()};
+function updateCount(){$("#recCount").textContent=store.get("records",[]).length+" records in notebook"}
+["geoName","projName","decl"].forEach(id=>{const el=$("#"+id);el.value=store.get("f."+id,el.value);el.addEventListener("input",()=>{store.set("f."+id,el.value);if(id==="decl"&&lastLive)updateLive()})});
+RENDER.field=()=>{if(!$("#rStn").value)$("#rStn").value=nextStation();updateCount();drawDial(lastLive)};
+
+/* ============ NOTEBOOK ============ */
+const orientText=r=>r.a==null?"—":r.kind==="line"?`${fx(r.b,0)} → ${pad3(r.a)}`:`${pad3(r.a)} / ${fx(r.b,0)}`;
+function renderNotebook(){const recs=store.get("records",[]).slice().reverse();const tb=$("#nbTable tbody");
+  tb.innerHTML=recs.length?recs.map(r=>`<tr><td><b>${esc(r.stn)}</b></td><td class="small">${new Date(r.time).toLocaleString("en-IN",{dateStyle:"short",timeStyle:"short"})}</td><td>${esc(r.type)}</td><td>${esc(r.set)}</td><td class="n">${orientText(r)}</td><td class="n">${fx(r.lat,5)}</td><td class="n">${fx(r.lon,5)}</td><td>${esc(r.lith)}</td><td class="small" style="max-width:260px">${esc(r.notes)}</td><td>${r.photo?`<img src="${r.photo}" alt="Station photo">`:""}</td><td class="noprint"><button class="btn sm danger" data-del="${r.id}" type="button">Delete</button></td></tr>`).join(""):`<tr><td colspan="11" class="muted">No records yet. Save readings from the field station, or load the example stations.</td></tr>`;
+  const planes=recs.filter(r=>r.kind==="plane"&&r.a!=null),lines=recs.filter(r=>r.kind==="line"&&r.a!=null);const stns=new Set(recs.map(r=>r.stn)).size;
+  $("#nbStats").innerHTML=ro("Stations",stns)+ro("Records",recs.length)+ro("Planes",planes.length)+ro("Lineations",lines.length)+ro("Photos",recs.filter(r=>r.photo).length);
+  tb.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{const id=+b.dataset.del;store.set("records",store.get("records",[]).filter(r=>r.id!==id));renderNotebook()})}
+RENDER.notebook=renderNotebook;
+const csvq=s=>`"${String(s??"").replace(/"/g,'""')}"`;
+$$("[data-exp]").forEach(b=>b.onclick=()=>{const recs=store.get("records",[]);if(!recs.length){toast("The notebook is empty.");return}const t=b.dataset.exp;
+  if(t==="csv"){let s="station,time,feature,set,kind,dip_direction_or_trend,dip_or_plunge,strike_rhr,lat,lon,elev_m,gps_acc_m,lithology,notes\n";recs.forEach(r=>{s+=[csvq(r.stn),r.time,csvq(r.type),csvq(r.set),r.kind,r.a??"",r.b??"",r.kind==="plane"&&r.a!=null?pad3(r.a-90):"",r.lat??"",r.lon??"",r.elev??"",r.acc!=null?r.acc.toFixed(0):"",csvq(r.lith),csvq(r.notes)].join(",")+"\n"});exportText("Notebook as CSV","geosathi_notebook.csv",s,"text/csv")}
+  if(t==="geojson"){const fc={type:"FeatureCollection",features:recs.filter(r=>isFinite(r.lat)&&isFinite(r.lon)).map(r=>({type:"Feature",geometry:{type:"Point",coordinates:[r.lon,r.lat]},properties:{station:r.stn,time:r.time,feature:r.type,set:r.set,kind:r.kind,azimuth:r.a,dip:r.b,lithology:r.lith,notes:r.notes}}))};exportText("Notebook as GeoJSON","geosathi_notebook.geojson",JSON.stringify(fc,null,1),"application/geo+json")}
+  if(t==="kml"){const k=`<?xml version="1.0" encoding="UTF-8"?>\n<kml xmlns="http://www.opengis.net/kml/2.2"><Document><name>GeoSathi notebook</name>\n`+recs.filter(r=>isFinite(r.lat)&&isFinite(r.lon)).map(r=>`<Placemark><name>${esc(r.stn)} ${esc(r.type)} ${orientText(r)}</name><description>${esc((r.lith||"")+" — "+(r.notes||""))}</description><Point><coordinates>${r.lon},${r.lat},0</coordinates></Point></Placemark>`).join("\n")+`\n</Document></kml>`;exportText("Notebook as KML","geosathi_notebook.kml",k,"application/vnd.google-earth.kml+xml")}});
+$("#nbToNet").onclick=()=>{const recs=store.get("records",[]).filter(r=>r.kind==="plane"&&r.a!=null);if(!recs.length){toast("No planes in the notebook yet.");return}
+  $("#snData").value=recs.map(r=>`${(r.set||r.type.split(" ")[0]).replace(/\s+/g,"")} ${pad3(r.a)}/${Math.round(r.b)}`).join("\n");location.hash="stereonet"};
+$("#nbClear").onclick=()=>confirmBox("Delete all records?","This removes every station and photo from this device. Export first if you need them. It cannot be undone.","Delete all",()=>{store.set("records",[]);renderNotebook()});
+$("#nbDemo").onclick=()=>{const base=[[15.8281,76.529],[15.8287,76.5296],[15.8292,76.5303],[15.8299,76.5311],[15.8305,76.5318]];const demo=[
+  ["Bedding (S0)","S0",46,38,"Metabasalt","Fine-grained, dark green, chlorite-actinolite; pillow structures visible."],["Joint","J1",151,71,"Metabasalt","Planar, rough, 0.5 m spacing, iron stained."],["Joint","J2",259,60,"Metabasalt","Persistent 3–5 m, slightly weathered."],
+  ["Vein","V1",268,66,"Quartz vein","Smoky quartz with pyrite and arsenopyrite; sample GS/R/014 taken."],["Foliation","S1",88,72,"Chlorite schist","Strong schistosity, sheared, carbonate alteration."],["Lineation","L1",172,24,"Chlorite schist","Stretching lineation on S1."]];
+  const recs=store.get("records",[]);demo.forEach((d,i)=>{const p=base[i%5];recs.push({id:Date.now()+i,stn:"S-"+String(100+i).padStart(3,"0"),time:new Date(Date.now()-((6-i)*1800e3)).toISOString(),type:d[0],set:d[1],kind:d[0]==="Lineation"?"line":"plane",a:d[2],b:d[3],lat:p[0],lon:p[1],elev:512+i,acc:6,lith:d[4],notes:d[5],photo:null})});store.set("records",recs);renderNotebook()};
+$("#nbPrint").onclick=()=>{const recs=store.get("records",[]);const planes=recs.filter(r=>r.kind==="plane"&&r.a!=null);
+  const cv=document.createElement("canvas");cv.setAttribute("width","420");cv.setAttribute("height","420");cv.style.width="420px";document.body.appendChild(cv);
+  drawNet(cv,{type:"schmidt",planes:planes.map((p,i)=>({dd:p.a,dip:p.b,col:SETCOL[i%8]})),points:planes.map((p,i)=>({...poleOf(p.a,p.b),col:SETCOL[i%8]}))});const img=cv.toDataURL();cv.remove();
+  $("#print-area").innerHTML=`<h1>Field report</h1><p>${esc(store.get("f.projName","")||"Project")} · ${esc(store.get("f.geoName","")||"Geologist")} · printed ${new Date().toLocaleDateString("en-IN")}</p><br><table class="data"><thead><tr><th>Station</th><th>Feature</th><th>Set</th><th>Orientation</th><th>Lat</th><th>Lon</th><th>Lithology</th><th>Notes</th></tr></thead><tbody>${recs.map(r=>`<tr><td>${esc(r.stn)}</td><td>${esc(r.type)}</td><td>${esc(r.set)}</td><td>${orientText(r)}</td><td>${fx(r.lat,5)}</td><td>${fx(r.lon,5)}</td><td>${esc(r.lith)}</td><td>${esc(r.notes)}</td></tr>`).join("")}</tbody></table><br><h2>Planes, lower hemisphere equal area</h2><img src="${img}" style="width:300px" alt="Stereonet"><p class="small">Generated with GeoSathi. Results support professional judgement.</p>`;doPrint(true)};
+
+/* ============ STEREONET ============ */
+function parseNet(txt){const out=[];txt.split(/\n/).forEach(l=>{l=l.trim();if(!l||l.startsWith("#"))return;const m=l.match(/^([A-Za-z][\w.-]*)?[\s,:;]*(\d+(?:\.\d+)?)\s*[\/,;\s]\s*(\d+(?:\.\d+)?)/);if(!m)return;const dd=+m[2],dip=+m[3];if(dip>90||dd>360)return;out.push({set:m[1]||"",dd:norm360(dd),dip})});return out}
+function kinPlanar(p,s,phi,lat){return angd(p.dd,s.dd)<=lat&&p.dip>phi&&p.dip<s.dip}
+function kinTopple(p,s,phi){return angd(p.dd,s.dd+180)<=10&&p.dip>=(90-s.dip)+phi}
+function between(x,a,b){const d=angd(a,b);return Math.abs(angd(x,a)+angd(x,b)-d)<1e-6}
+function wedgeFS(p1,p2,I,phi){const i=lineVec(I.trend,I.plunge);const n1=unit(lineVec(...Object.values(poleOf(p1.dd,p1.dip)))),n2=unit(lineVec(...Object.values(poleOf(p2.dd,p2.dip))));
+  let d1=unit(cross(i,n1)),d2=unit(cross(i,n2));const up=[0,0,1];const u=unit(up.map((v,k)=>v-dot(up,i)*i[k]));if(dot(d1,u)<0)d1=d1.map(v=>-v);if(dot(d2,u)<0)d2=d2.map(v=>-v);
+  const xi=Math.acos(Math.max(-1,Math.min(1,dot(d1,d2))));const bis=unit(d1.map((v,k)=>v+d2[k]));const beta=Math.PI/2-Math.acos(Math.max(-1,Math.min(1,dot(bis,u))));
+  const K=Math.sin(Math.abs(beta))/Math.sin(xi/2);
+  return {K,xi:xi*R2D,FS:K*Math.tan(phi*D2R)/Math.tan(I.plunge*D2R)}}
+function renderNet(){const data=parseNet($("#snData").value);const type=$("#snNet").value,show=$("#snShow").value;const phi=num("#snPhi"),lat=num("#snLat")||20;const slope={dd:num("#snSdd"),dip:num("#snSdip")};const hasSlope=isFinite(slope.dd)&&isFinite(slope.dip);
+  const setNames=[...new Set(data.map(d=>d.set||"—"))];const col=s=>SETCOL[setNames.indexOf(s||"—")%SETCOL.length];
+  const sets=setNames.map(n=>{const ps=data.filter(d=>(d.set||"—")===n);return {name:n,...fisherMean(ps),col:col(n)}});
+  const planes=[],points=[];
+  if(show==="both"||show==="gc")data.forEach(d=>planes.push({dd:d.dd,dip:d.dip,col:col(d.set)}));
+  if(show==="both"||show==="poles")data.forEach(d=>points.push({...poleOf(d.dd,d.dip),col:col(d.set)}));
+  sets.forEach(s=>{if(s.N>1||show==="means"){planes.push({dd:s.dd,dip:s.dip,col:s.col,mean:true});points.push({...poleOf(s.dd,s.dip),col:s.col,shape:"sq",label:s.name})}});
+  const wedges=[];for(let i=0;i<sets.length;i++)for(let j=i+1;j<sets.length;j++){const I=intersection(sets[i],sets[j]);if(!I)continue;wedges.push({a:sets[i],b:sets[j],I});points.push({...I,col:css("--ink"),shape:"tri",r:4})}
+  const o=drawNet($("#snCanvas"),{type,planes,points,poles:data.map(d=>poleOf(d.dd,d.dip)),density:$("#snDen").value==="on",phi:isFinite(phi)?phi:undefined,slope:hasSlope?slope:null});
+  $("#snLegend").innerHTML=`<span>${data.length} planes · ${sets.length} sets</span><span>■ set mean pole · ▲ intersection of set means</span>${hasSlope?"<span>Dashed black: slope face</span>":""}${isFinite(phi)?"<span>Dashed red circle: φ = "+phi+"° (intersections inside it are steep enough to slide)</span>":""}${o._mud?"<span>Shading: pole density, max "+o._mud.toFixed(1)+" × uniform</span>":""}${type==="wulff"&&$("#snDen").value==="on"?"<span>Density needs the Schmidt net</span>":""}`;
+  $("#snSets tbody").innerHTML=sets.map(s=>`<tr><td><span style="color:${s.col}">■</span> <b>${esc(s.name)}</b></td><td class="n">${s.N}</td><td class="n">${pad3(s.dd)} / ${fx(s.dip,0)}</td><td class="n">${pad3(s.dd-90)}</td><td class="n">${s.N>1?(isFinite(s.k)?fx(s.k,0):"∞"):"—"}</td><td class="n">${s.N>2?fx(s.a95,1)+"°":"—"}</td></tr>`).join("")||`<tr><td colspan="6" class="muted">Enter data like <span class="mono">J1 150/70</span></td></tr>`;
+  const P=(b,t,f)=>`<span class="pill ${b?"bad":"ok"}">${b?t:f}</span>`;
+  if(hasSlope&&isFinite(phi)){
+    $("#snKin tbody").innerHTML=sets.map(s=>{const ps=data.filter(d=>(d.set||"—")===s.name);const nin=ps.filter(p=>kinPlanar(p,slope,phi,lat)).length;const pl=kinPlanar(s,slope,phi,lat),tp=kinTopple(s,slope,phi);const fs=Math.tan(phi*D2R)/Math.tan(s.dip*D2R);
+      return `<tr><td><b>${esc(s.name)}</b></td><td>${P(pl,"Possible","Not possible")}</td><td>${P(tp,"Possible","Not possible")}</td><td class="n">${pl?fx(fs,2):"—"}</td><td class="n">${nin} of ${ps.length}</td></tr>`}).join("");
+    $("#snWedge tbody").innerHTML=wedges.map(w=>{const app=Math.atan(Math.tan(slope.dip*D2R)*Math.cos((w.I.trend-slope.dd)*D2R))*R2D;const day=Math.cos((w.I.trend-slope.dd)*D2R)>0;const poss=day&&w.I.plunge>phi&&w.I.plunge<app;
+      let single="";if(poss){if(between(w.a.dd,w.I.trend,slope.dd))single=" on "+w.a.name+" only";else if(between(w.b.dd,w.I.trend,slope.dd))single=" on "+w.b.name+" only"}
+      const f=poss&&!single?wedgeFS(w.a,w.b,w.I,phi):null;
+      return `<tr><td><b>${esc(w.a.name)} × ${esc(w.b.name)}</b></td><td class="n">${fx(w.I.plunge,0)} → ${pad3(w.I.trend)}</td><td>${poss?`<span class="pill bad">Possible${single?", sliding"+esc(single):""}</span>`:'<span class="pill ok">Not possible</span>'}</td><td class="n">${f?fx(f.FS,2):"—"}</td></tr>`}).join("")||`<tr><td colspan="4" class="muted">Needs two or more sets</td></tr>`;
+  }else{$("#snKin tbody").innerHTML=`<tr><td colspan="5" class="muted">Enter the slope and φ</td></tr>`;$("#snWedge tbody").innerHTML=""}
+}
+["#snData","#snNet","#snShow","#snDen","#snSdd","#snSdip","#snPhi","#snLat"].forEach(id=>$(id).addEventListener("input",renderNet));
+$("#snPrint").onclick=()=>doPrint(false);
+RENDER.stereonet=renderNet;
+
+/* ============ RMR / SMR ============ */
+function rateUCS(v){return v>250?15:v>100?12:v>50?7:v>25?4:v>5?2:v>=1?1:0}
+function rateIs(v){return v>10?15:v>4?12:v>2?7:v>=1?4:NaN}
+function rateRQD(v){return v>=90?20:v>=75?17:v>=50?13:v>=25?8:3}
+const RMRCLS=[[81,"I","Very good rock","ok",">400",">45","20 years for a 15 m span"],[61,"II","Good rock","ok","300–400","35–45","1 year for a 10 m span"],[41,"III","Fair rock","warn","200–300","25–35","1 week for a 5 m span"],[21,"IV","Poor rock","bad","100–200","15–25","10 hours for a 2.5 m span"],[-1,"V","Very poor rock","bad","<100","<15","30 minutes for a 1 m span"]];
+let lastRMR=NaN;
+function renderRMR(){const st=$("#rmStrType").value,sv=num("#rmStr");let a1=st==="ucs"?rateUCS(sv):rateIs(sv);let a1note="";if(st==="is50"&&!isFinite(a1)){a1=NaN;a1note="Is(50) below 1 MPa: use UCS"}
+  let rq=num("#rmRqd");if($("#rmRqdType").value==="jv")rq=Math.max(0,Math.min(100,110-2.5*rq));const a2=rateRQD(rq);
+  const a3=+$("#rmSp").value,a5=+$("#rmGw").value;const a4=["#rmPer","#rmApe","#rmRou","#rmInf","#rmWea"].reduce((s,id)=>s+ +$(id).value,0);
+  const tot=a1+a2+a3+a4+a5;lastRMR=tot;const cls=RMRCLS.find(c=>tot>=c[0]);
+  if(isFinite(tot)){pill($("#rmPill"),cls[3],`Class ${cls[1]} · ${cls[2]}`)}else pill($("#rmPill"),"na","Check strength");
+  $("#rmOut").innerHTML=ro("RMR89",isFinite(tot)?tot:"—",{hl:true})+ro("Class",isFinite(tot)?cls[1]+" <small>"+cls[2]+"</small>":"—",{sz:17})+ro("Rock-mass cohesion",isFinite(tot)?cls[4]+" <small>kPa</small>":"—",{sz:17})+ro("Rock-mass φ",isFinite(tot)?cls[5]+"°":"—",{sz:17})+ro("Stand-up time",isFinite(tot)?cls[6]:"—",{sz:14})+ro("RQD used",fx(rq,0)+" %",{sz:17})+(a1note?ro("Note",a1note,{sz:13}):"");
+  const bars=[["A1 Strength",a1,15],["A2 RQD",a2,20],["A3 Spacing",a3,20],["A4 Condition",a4,30],["A5 Water",a5,15]];
+  const {c,w,h}=canvasFor($("#rmBars"));c.clearRect(0,0,w,h);const L=104,top=8,bh=(h-top*2)/bars.length;c.font="12.5px "+css("--body");c.textBaseline="middle";
+  bars.forEach(([n,v,m],i)=>{const y=top+i*bh+bh/2;const bw=w-L-60;c.fillStyle=css("--muted");c.textAlign="left";c.fillText(n,0,y);c.fillStyle=css("--surface2");c.fillRect(L,y-9,bw,18);c.strokeStyle=css("--line");c.strokeRect(L+.5,y-8.5,bw-1,17);c.fillStyle=css("--accent2");c.fillRect(L,y-9,bw*(isFinite(v)?v:0)/m,18);c.fillStyle=css("--ink");c.font="600 12.5px "+css("--mono");c.fillText(`${isFinite(v)?v:"—"} / ${m}`,L+bw+8,y);c.font="12.5px "+css("--body")});
+  renderSMR()}
+function renderSMR(){const m=$("#smMode").value;$("#smJddL").textContent=m==="wedge"?"Intersection trend (°)":"Joint dip direction (°)";$("#smJdipL").textContent=m==="wedge"?"Intersection plunge (°)":"Joint dip (°)";
+  const aj=num("#smJdd"),bj=num("#smJdip"),as=num("#smSdd"),bs=num("#smSdip"),F4=+$("#smF4").value;
+  let A=m==="toppling"?angd(aj,as+180):angd(aj,as);const B=bj;const atd=x=>Math.atan(x)*R2D;
+  const F1=16/25-3/500*atd((A-17)/10);const F2=m==="toppling"?1:9/16+1/195*atd(17/100*B-5);let C,F3;
+  if(m==="toppling"){C=bj+bs;F3=-13-1/7*atd(C-120)}else{C=bj-bs;F3=-30+1/3*atd(C)}
+  const smr=lastRMR+F1*F2*F3+F4;const S=[[81,"I","Completely stable","None","ok","No support"],[61,"II","Stable","Some blocks","ok","Occasional"],[41,"III","Partially stable","Some joints or many wedges","warn","Systematic"],[21,"IV","Unstable","Planar or big wedges","bad","Important, corrective"],[-999,"V","Completely unstable","Big planar or soil-like","bad","Re-excavation"]].find(s=>smr>=s[0]);
+  if(isFinite(smr))pill($("#smPill"),S[4],`Class ${S[1]} · ${S[2]}`);else pill($("#smPill"),"na","—");
+  $("#smOut").innerHTML=ro("F1",fx(F1,2))+ro("F2",fx(F2,2))+ro("F3",fx(F3,1))+ro("F4",F4)+ro("SMR",fx(smr,0),{hl:true})+ro("Expected failures",isFinite(smr)?S[3]:"—",{sz:14})+ro("Support",isFinite(smr)?S[5]:"—",{sz:14})}
+["#rmStrType","#rmStr","#rmRqdType","#rmRqd","#rmSp","#rmGw","#rmPer","#rmApe","#rmRou","#rmInf","#rmWea"].forEach(id=>$(id).addEventListener("input",renderRMR));
+["#smMode","#smJdd","#smJdip","#smSdd","#smSdip","#smF4"].forEach(id=>$(id).addEventListener("input",renderSMR));
+RENDER.rmr=renderRMR;
+
+/* ============ PLANE FAILURE ============ */
+function planarFS(H,pf,pp,z,zw,g,c,phi,kh,gw=9.81){const tp=Math.tan(pp*D2R),tf=Math.tan(pf*D2R);
+  const A=(H-z)/Math.sin(pp*D2R);const W=0.5*g*H*H*((1-(z/H)**2)/tp-1/tf);const U=0.5*gw*zw*A;const V=0.5*gw*zw*zw;
+  const res=c*A+(W*(Math.cos(pp*D2R)-kh*Math.sin(pp*D2R))-U-V*Math.sin(pp*D2R))*Math.tan(phi*D2R);const drv=W*(Math.sin(pp*D2R)+kh*Math.cos(pp*D2R))+V*Math.cos(pp*D2R);
+  return {FS:res/drv,A,W,U,V,res,drv}}
+function renderSlope(){const H=num("#pfH"),pf=num("#pfPf"),pp=num("#pfPp"),zw0=num("#pfZw"),g=num("#pfG"),c=num("#pfC"),phi=num("#pfPhi"),kh=num("#pfKh")||0;
+  const out=$("#pfOut");if(!(pp>0&&pf>pp&&pf<=90&&H>0)){out.innerHTML=ro("Check input","Sliding plane must dip less steeply than the face",{sz:14});pill($("#pfPill"),"na","—");return}
+  const zc=H*(1-Math.sqrt(Math.tan(pp*D2R)/Math.tan(pf*D2R)));const zmax=H*(1-Math.tan(pp*D2R)/Math.tan(pf*D2R));let z=num("#pfZ");if(!isFinite(z))z=zc;
+  let warn="";if(z>zmax){warn="Crack would daylight in the face; depth limited to "+fx(zmax,1)+" m";z=zmax}
+  const zw=Math.min(isFinite(zw0)?zw0:0,z);const r=planarFS(H,pf,pp,z,zw,g,c,phi,kh);const rd=planarFS(H,pf,pp,z,0,g,c,phi,0);
+  const st=r.FS<1?"bad":r.FS<1.3?"warn":"ok";pill($("#pfPill"),st,r.FS<1?"Unstable":r.FS<1.3?"Marginal":"Stable");
+  out.innerHTML=ro("Factor of safety",fx(r.FS,2),{hl:true})+ro("FS dry, static",fx(rd.FS,2))+ro("Crack depth z",fx(z,2)+" <small>m</small>")+ro("Sliding plane length A",fx(r.A,1)+" <small>m</small>")+ro("Block weight W",fint(r.W)+" <small>kN/m</small>")+ro("Uplift U · thrust V",fint(r.U)+" · "+fint(r.V)+" <small>kN/m</small>",{sz:16})+(warn?ro("Note",warn,{sz:13}):"")+ro("Target",'FS ≥ 1.3 static, ≥ 1.1 seismic is common practice',{sz:13});
+  // section
+  {const {c:x,w,h}=canvasFor($("#pfSec"));x.clearRect(0,0,w,h);const pad=26;const Lb=H/Math.tan(pp*D2R);const totalW=Lb*1.25,sc=Math.min((w-2*pad)/totalW,(h-2*pad)/(H*1.15));const X=v=>pad+v*sc,Y=v=>h-pad-v*sc;
+    const toeX=0,crestX=H/Math.tan(pf*D2R);const crackX=(H-z)/Math.tan(pp*D2R);
+    x.fillStyle=css("--surface2");x.beginPath();x.moveTo(X(-totalW*.05),Y(0));x.lineTo(X(toeX),Y(0));x.lineTo(X(crestX),Y(H));x.lineTo(X(totalW),Y(H));x.lineTo(X(totalW),Y(-H*.05));x.lineTo(X(-totalW*.05),Y(-H*.05));x.closePath();x.fill();
+    x.fillStyle=css("--accent");x.globalAlpha=.28;x.beginPath();x.moveTo(X(toeX),Y(0));x.lineTo(X(crestX),Y(H));x.lineTo(X(crackX),Y(H));x.lineTo(X(crackX),Y(H-z));x.closePath();x.fill();x.globalAlpha=1;
+    x.strokeStyle=css("--ink");x.lineWidth=2;x.beginPath();x.moveTo(X(-totalW*.05),Y(0));x.lineTo(X(toeX),Y(0));x.lineTo(X(crestX),Y(H));x.lineTo(X(totalW),Y(H));x.stroke();
+    x.strokeStyle=css("--bad");x.setLineDash([6,4]);x.beginPath();x.moveTo(X(toeX),Y(0));x.lineTo(X(crackX),Y(H-z));x.stroke();x.setLineDash([]);
+    x.strokeStyle=css("--ink");x.lineWidth=1.5;x.beginPath();x.moveTo(X(crackX),Y(H));x.lineTo(X(crackX),Y(H-z));x.stroke();
+    if(zw>0){x.fillStyle="#3b7dd8";x.globalAlpha=.6;x.fillRect(X(crackX)-3,Y(H-z+zw),6,zw*sc);x.globalAlpha=1}
+    x.fillStyle=css("--muted");x.font="12px "+css("--body");x.fillText(`H = ${H} m`,X(crestX)+6,Y(H)+16);x.fillText(`ψf ${pf}°`,X(toeX)+10,Y(0)-8);x.fillStyle=css("--bad");x.fillText(`ψp ${pp}°`,X(crackX*.55)+4,Y((H-z)*.55)+16);x.fillStyle=css("--ink");x.fillText(`z = ${fx(z,1)} m`,X(crackX)+6,Y(H-z/2))}
+  // sensitivity
+  {const xs=[],ys=[];for(let i=0;i<=20;i++){const f=i/20;xs.push(f*100);ys.push(planarFS(H,pf,pp,z,z*f,g,c,phi,kh).FS)}
+   lineChart($("#pfSens"),{xs,series:[{ys,col:css("--accent")}],xlabel:"Crack filled with water (%)",ylabel:"FS",hlines:[{y:1,col:css("--bad"),label:"FS = 1"}],marker:{x:z>0?zw/z*100:0,y:r.FS}})}
+}
+["#pfH","#pfPf","#pfPp","#pfZ","#pfZw","#pfG","#pfC","#pfPhi","#pfKh"].forEach(id=>$(id).addEventListener("input",renderSlope));
+RENDER.slope=renderSlope;
+
+/* ============ generic line chart ============ */
+function lineChart(cv,o){const {c,w,h}=canvasFor(cv);c.clearRect(0,0,w,h);const pl=48,pr=14,pt=12,pb=40;const W=w-pl-pr,H=h-pt-pb;
+  const allY=o.series.flatMap(s=>s.ys).filter(isFinite).concat((o.hlines||[]).map(l=>l.y));let ymin=o.ymin??Math.min(0,...allY),ymax=o.ymax??Math.max(...allY)*1.1;if(ymax<=ymin)ymax=ymin+1;
+  const xmin=o.xmin??Math.min(...o.xs),xmax=o.xmax??Math.max(...o.xs);const lx=v=>o.xlog?Math.log10(v):v;const X=v=>pl+(lx(v)-lx(xmin))/(lx(xmax)-lx(xmin))*W,Y=v=>pt+H-(v-ymin)/(ymax-ymin)*H;
+  const muted=css("--muted"),line=css("--line");c.font="11.5px "+css("--mono");c.fillStyle=muted;c.strokeStyle=line;c.lineWidth=1;
+  const nice=(a,b,n)=>{const r=(b-a)/n,p=Math.pow(10,Math.floor(Math.log10(r))),m=r/p;const st=(m<1.5?1:m<3?2:m<7?5:10)*p;const t=[];for(let v=Math.ceil(a/st)*st;v<=b+1e-9;v+=st)t.push(+v.toFixed(10));return t};
+  c.textAlign="right";c.textBaseline="middle";nice(ymin,ymax,5).forEach(v=>{c.beginPath();c.moveTo(pl,Y(v));c.lineTo(pl+W,Y(v));c.stroke();c.fillText(String(+v.toFixed(3)),pl-6,Y(v))});
+  c.textAlign="center";c.textBaseline="top";const xt=o.xlog?o.xticks:nice(xmin,xmax,6);xt.forEach(v=>{c.beginPath();c.moveTo(X(v),pt);c.lineTo(X(v),pt+H);c.stroke();c.fillText(String(v),X(v),pt+H+5)});
+  c.fillStyle=muted;c.font="12px "+css("--body");c.fillText(o.xlabel||"",pl+W/2,pt+H+22);c.save();c.translate(12,pt+H/2);c.rotate(-Math.PI/2);c.textBaseline="middle";c.fillText(o.ylabel||"",0,0);c.restore();
+  (o.vbands||[]).forEach(b=>{c.fillStyle=b.col;c.globalAlpha=.07;c.fillRect(X(b.x0),pt,X(b.x1)-X(b.x0),H);c.globalAlpha=1;c.fillStyle=muted;c.font="11px "+css("--body");c.textBaseline="top";c.fillText(b.label,(X(b.x0)+X(b.x1))/2,pt+3)});
+  (o.hlines||[]).forEach(l=>{c.strokeStyle=l.col;c.setLineDash([5,4]);c.beginPath();c.moveTo(pl,Y(l.y));c.lineTo(pl+W,Y(l.y));c.stroke();c.setLineDash([]);c.fillStyle=l.col;c.textAlign="right";c.textBaseline="bottom";c.font="11.5px "+css("--body");c.fillText(l.label,pl+W-4,Y(l.y)-2)});
+  o.series.forEach(s=>{const xs=s.xs||o.xs;c.strokeStyle=s.col;c.lineWidth=2.2;c.beginPath();let st=false;s.ys.forEach((y,i)=>{if(!isFinite(y))return;st?c.lineTo(X(xs[i]),Y(y)):c.moveTo(X(xs[i]),Y(y));st=true});c.stroke();
+    if(s.fill){c.lineTo(X(xs[xs.length-1]),Y(ymin));c.lineTo(X(xs[0]),Y(ymin));c.closePath();c.globalAlpha=.1;c.fillStyle=s.col;c.fill();c.globalAlpha=1}
+    if(s.dots){c.fillStyle=s.col;s.ys.forEach((y,i)=>{if(isFinite(y)){c.beginPath();c.arc(X(xs[i]),Y(y),3.2,0,7);c.fill()}})}});
+  if(o.marker&&isFinite(o.marker.y)){c.fillStyle=css("--ink");c.beginPath();c.arc(X(o.marker.x),Y(o.marker.y),5,0,7);c.fill();c.strokeStyle=css("--surface");c.lineWidth=2;c.stroke();if(o.marker.label){c.fillStyle=css("--ink");c.font="600 12px "+css("--body");c.textAlign="left";c.textBaseline="bottom";c.fillText(o.marker.label,X(o.marker.x)+8,Y(o.marker.y)-4)}}
+}
+
+/* ============ CORE ============ */
+const CORE_DEMO=[[0,3,1.2,0,"Laterite / soil",0.02],[3,6,2.7,1.1,"Weathered metabasalt",0.05],[6,9,2.9,2.1,"Metabasalt",0.08],[9,12,3.0,2.6,"Metabasalt",0.12],[12,15,2.95,2.4,"Chlorite schist",0.9],[15,18,3.0,2.2,"Quartz vein + sulphides",6.4],[18,21,2.9,2.0,"Quartz vein",3.8],[21,24,3.0,2.5,"Chlorite schist",0.7],[24,27,3.0,2.8,"Metabasalt",0.09],[27,30,3.0,2.9,"Metabasalt",0.04]];
+let coreRows=store.get("core.rows",CORE_DEMO);
+const deere=r=>!isFinite(r)?["—","na"]:r>=90?["Excellent","ok"]:r>=75?["Good","ok"]:r>=50?["Fair","warn"]:r>=25?["Poor","bad"]:["Very poor","bad"];
+function buildCoreTable(){$("#coTable tbody").innerHTML=coreRows.map((r,i)=>`<tr data-i="${i}">${[0,1,2,3].map(k=>`<td><input type="number" step="0.01" data-k="${k}" value="${r[k]??""}" aria-label="Run ${i+1} column ${k+1}"></td>`).join("")}<td><input type="text" data-k="4" value="${esc(r[4]??"")}" list="lithList" aria-label="Run ${i+1} lithology" style="min-width:150px"></td><td><input type="number" step="0.01" data-k="5" value="${r[5]??""}" aria-label="Run ${i+1} grade"></td><td class="n" data-o="run"></td><td class="n" data-o="tcr"></td><td class="n" data-o="rqd"></td><td data-o="q"></td><td class="noprint"><button class="btn sm danger" data-rm="${i}" type="button" aria-label="Remove run">×</button></td></tr>`).join("");
+  $$("#coTable input").forEach(inp=>inp.addEventListener("input",()=>{const i=+inp.closest("tr").dataset.i,k=+inp.dataset.k;coreRows[i][k]=k===4?inp.value:(inp.value===""?null:+inp.value);store.set("core.rows",coreRows);calcCore()}));
+  $$("#coTable [data-rm]").forEach(b=>b.onclick=()=>{coreRows.splice(+b.dataset.rm,1);store.set("core.rows",coreRows);buildCoreTable()});calcCore()}
+$("#coAdd").onclick=()=>{const last=coreRows[coreRows.length-1];const f=last?last[1]:0;coreRows.push([f,f!=null?+(f+3).toFixed(2):null,null,null,last?last[4]:"",null]);store.set("core.rows",coreRows);buildCoreTable()};
+function calcCore(){let tot=0,rec=0,rqdL=0,gm=0,gl=0;const unit=$("#coUnit").value;
+  coreRows.forEach((r,i)=>{const tr=$(`#coTable tr[data-i="${i}"]`);const L=r[1]-r[0];const ok=isFinite(L)&&L>0;const tcr=ok&&r[2]!=null?r[2]/L*100:NaN,rqd=ok&&r[3]!=null?r[3]/L*100:NaN;
+    tr.querySelector('[data-o="run"]').textContent=ok?L.toFixed(2):"—";tr.querySelector('[data-o="tcr"]').textContent=fx(tcr,0);tr.querySelector('[data-o="rqd"]').textContent=fx(rqd,0);const q=deere(rqd);tr.querySelector('[data-o="q"]').innerHTML=`<span class="pill ${q[1]}">${q[0]}</span>`;
+    if(ok){tot+=L;if(r[2]!=null)rec+=Math.min(r[2],L);if(r[3]!=null)rqdL+=r[3];if(r[5]!=null&&isFinite(r[5])){gm+=r[5]*L;gl+=L}}});
+  const az=num("#coAz"),dip=num("#coDip"),vdd=num("#coVdd"),vdip=num("#coVdip");const h=lineVec(az,Math.abs(dip));const n=[Math.sin(vdip*D2R)*Math.sin(vdd*D2R),Math.sin(vdip*D2R)*Math.cos(vdd*D2R),Math.cos(vdip*D2R)];const ttf=Math.abs(dot(h,n));
+  const depthEnd=coreRows.reduce((m,r)=>Math.max(m,r[1]||0),0);const vdepth=depthEnd*Math.sin(Math.abs(dip)*D2R);
+  $("#coSum").innerHTML=ro("Drilled",fx(tot,2)+" <small>m</small>")+ro("Core recovery (TCR)",fx(rec/tot*100,1)+" <small>%</small>",{hl:true})+ro("RQD (hole)",fx(rqdL/tot*100,1)+" <small>%</small>")+ro("Weighted grade",fx(gm/gl,2)+` <small>${unit}</small>`)+ro("Metal accumulation",fx(gm,1)+` <small>${unit.split(" ")[0]}·m</small>`)+ro("Vertical depth at EOH",fx(vdepth,1)+" <small>m</small>")+ro("End-of-hole RL",fx(num("#coRL")-vdepth,1)+" <small>m</small>");
+  // intercepts
+  const cut=num("#coCut");const ints=[];let cur=null;coreRows.slice().sort((a,b)=>a[0]-b[0]).forEach(r=>{const g=r[5];const L=r[1]-r[0];if(isFinite(g)&&g>=cut&&L>0){if(cur&&Math.abs(cur.to-r[0])<1e-6){cur.to=r[1];cur.gm+=g*L;cur.L+=L;cur.max=Math.max(cur.max,g)}else{cur={from:r[0],to:r[1],gm:g*L,L,max:g};ints.push(cur)}}else cur=null});
+  $("#coInt").innerHTML=ints.length?ints.map(t=>`<div class="callout"><b class="mono">${fx(t.L,2)} m @ ${fx(t.gm/t.L,2)} ${unit}</b> from ${fx(t.from,2)} m <span class="muted">(${fx(t.from,2)}–${fx(t.to,2)} m, max ${fx(t.max,2)})</span><br><span class="small">Estimated true thickness <b class="mono">${fx(t.L*ttf,2)} m</b> · ${fx(t.gm,1)} ${unit.split(" ")[0]}·m</span></div>`).join("")+`<p class="note">True thickness factor ${fx(ttf,2)} from the angle between the hole (${pad3(az)}/−${fx(Math.abs(dip),0)}) and the ore zone (${pad3(vdd)}/${fx(vdip,0)}).</p>`:`<p class="muted small">No run reaches the cut-off of ${cut}.</p>`;
+  drawStrip(unit,cut)}
+function drawStrip(unit,cut){const cv=$("#coLog");const {c,w,h}=canvasFor(cv);c.clearRect(0,0,w,h);const rows=coreRows.filter(r=>isFinite(r[0])&&isFinite(r[1])&&r[1]>r[0]);if(!rows.length)return;
+  const D=Math.max(...rows.map(r=>r[1]));const top=26,bot=10,Hh=h-top-bot;const Y=d=>top+d/D*Hh;const cols={depth:[0,44],lith:[50,w*.42],rqd:[w*.44,w*.68],grade:[w*.71,w-6]};
+  c.font="600 11.5px "+css("--body");c.fillStyle=css("--muted");c.textBaseline="bottom";c.textAlign="left";c.fillText("Depth",cols.depth[0],top-6);c.fillText("Lithology",cols.lith[0],top-6);c.fillText("TCR / RQD %",cols.rqd[0],top-6);c.fillText("Grade "+unit,cols.grade[0],top-6);
+  c.font="11px "+css("--mono");c.textBaseline="middle";c.strokeStyle=css("--line");const step=D>60?10:D>25?5:3;for(let d=0;d<=D+1e-6;d+=step){c.fillStyle=css("--muted");c.fillText(d+" m",0,Y(d));c.beginPath();c.moveTo(46,Y(d));c.lineTo(w,Y(d));c.stroke()}
+  const lithCols={};let li=0;const lc=n=>{const k=(n||"").toLowerCase();if(/quartz|vein/.test(k))return "#e8d9a8";if(/schist/.test(k))return "#7fae8c";if(/basalt|amphib|dolerite/.test(k))return "#4f6f62";if(/laterite|soil/.test(k))return "#b8673a";if(/granit|gneiss/.test(k))return "#d7a7a0";if(!lithCols[k])lithCols[k]=SETCOL[(li++)%8];return lithCols[k]};
+  const gmax=Math.max(cut*2,...rows.map(r=>r[5]||0));
+  rows.forEach(r=>{const y0=Y(r[0]),y1=Y(r[1]);c.fillStyle=lc(r[4]);c.fillRect(cols.lith[0],y0,cols.lith[1]-cols.lith[0],y1-y0);c.strokeStyle=css("--surface");c.strokeRect(cols.lith[0],y0,cols.lith[1]-cols.lith[0],y1-y0);
+    if(y1-y0>13){c.fillStyle="#111";c.font="11px "+css("--body");c.textAlign="left";c.fillText((r[4]||"").slice(0,26),cols.lith[0]+5,(y0+y1)/2)}
+    const L=r[1]-r[0],rw=cols.rqd[1]-cols.rqd[0];const tcr=(r[2]||0)/L,rqd=(r[3]||0)/L;c.fillStyle=css("--line");c.fillRect(cols.rqd[0],y0+1,rw*Math.min(1,tcr),y1-y0-2);c.fillStyle=css("--accent2");c.fillRect(cols.rqd[0],y0+1,rw*Math.min(1,rqd),y1-y0-2);
+    const gw=cols.grade[1]-cols.grade[0];if(isFinite(r[5])&&r[5]!=null){c.fillStyle=r[5]>=cut?css("--accent"):css("--muted");c.globalAlpha=r[5]>=cut?1:.5;c.fillRect(cols.grade[0],y0+1,gw*Math.min(1,r[5]/gmax),y1-y0-2);c.globalAlpha=1;if(y1-y0>12){c.fillStyle=css("--ink");c.font="11px "+css("--mono");c.textAlign="right";c.fillText(r[5],cols.grade[1],(y0+y1)/2)}}});
+  const cx=cols.grade[0]+(cols.grade[1]-cols.grade[0])*Math.min(1,cut/gmax);c.strokeStyle=css("--bad");c.setLineDash([4,3]);c.beginPath();c.moveTo(cx,top);c.lineTo(cx,top+Hh);c.stroke();c.setLineDash([])}
+["#coAz","#coDip","#coVdd","#coVdip","#coCut","#coUnit","#coRL"].forEach(id=>$(id).addEventListener("input",calcCore));
+$("#coExp").onclick=()=>{let s=`hole_id,from_m,to_m,run_m,recovered_m,rqd_pieces_m,tcr_pct,rqd_pct,lithology,grade_${$("#coUnit").value.replace(/\W+/g,"_")}\n`;coreRows.forEach(r=>{const L=r[1]-r[0];s+=[$("#coId").value,r[0],r[1],L.toFixed(2),r[2]??"",r[3]??"",r[2]!=null?(r[2]/L*100).toFixed(1):"",r[3]!=null?(r[3]/L*100).toFixed(1):"",csvq(r[4]),r[5]??""].join(",")+"\n"});exportText("Core log as CSV",($("#coId").value||"hole")+"_log.csv",s,"text/csv")};
+RENDER.core=()=>{if(!$("#coTable tbody").children.length)buildCoreTable();else calcCore()};
+
+/* ============ QUARRY ============ */
+const BRASS=2.8316846592;
+function renderQuarry(){const A=num("#qArea")*1e4,P=num("#qPer"),b=num("#qBar"),D=num("#qDep"),OB=Math.min(num("#qOb")||0,D),al=num("#qSl"),rho=num("#qRho"),rec=num("#qRec")/100,prod=num("#qProd");
+  const An=Math.max(0,A-P*b+4*b*b),Pn=Math.max(0,P-8*b),ta=Math.tan(al*D2R);
+  const obV=Math.max(0,An*OB-Pn*OB*OB/(2*ta));const minV=Math.max(0,An*(D-OB)-Pn*(D*D-OB*OB)/(2*ta));
+  const geo=A*(D-OB)*rho;const minT=minV*rho;const mineable=minT*rec;const waste=minT*(1-rec);const sr=obV/minV;const life=mineable/prod;
+  const blocked=geo-minT;
+  $("#qOut").innerHTML=ro("Geological reserve",fint(geo)+" <small>t</small>")+ro("Locked in barrier and slopes",fint(blocked)+" <small>t</small>")+ro("Mineable reserve",fint(mineable)+" <small>t</small>",{hl:true})+ro("Mineable volume",fint(mineable/rho)+" <small>m³</small>")+ro("In brass",fint(mineable/rho/BRASS)+" <small>brass</small>")+ro("Rejects / waste rock",fint(waste)+" <small>t</small>")+ro("Overburden",fint(obV)+" <small>m³</small>")+ro("Stripping ratio",fx(sr,2)+" <small>m³ : m³</small>")+ro("Working area after barrier",fx(An/1e4,3)+" <small>ha</small>")+ro("Life of mine",fx(life,1)+" <small>years</small>",{hl:true});
+  // benches
+  const bh=num("#qBh"),bw=num("#qBw"),bf=num("#qBf");const n=Math.max(1,Math.ceil(D/bh));const horiz=(n-1)*bw+D/Math.tan(bf*D2R);const osa=Math.atan(D/horiz)*R2D;
+  $("#qOut").innerHTML+=ro("Benches",n+" <small>× "+bh+" m</small>")+ro("Overall slope from benches",fx(osa,1)+"°"+(Math.abs(osa-al)>3?` <small>(you entered ${al}°)</small>`:""));
+  // section
+  const {c,w,h}=canvasFor($("#qSec"));c.clearRect(0,0,w,h);const half=Math.sqrt(A)/2;const pad=18;const sc=Math.min((w-2*pad)/(2*half),(h-40)/(D*1.15));const X=v=>w/2+v*sc,Y=v=>24+v*sc;
+  c.fillStyle=css("--surface2");c.fillRect(X(-half)-10,Y(0),2*half*sc+20,D*sc*1.12);
+  c.fillStyle="#b8673a";c.globalAlpha=.35;c.fillRect(X(-half)-10,Y(0),2*half*sc+20,OB*sc);c.globalAlpha=1;
+  // benched pit
+  const e=half-b;c.fillStyle=css("--surface");c.strokeStyle=css("--ink");c.lineWidth=1.6;c.beginPath();c.moveTo(X(-e),Y(0));let x=-e,y=0;const pts=[];for(let i=0;i<n;i++){const hh=Math.min(bh,D-y);x+=hh/Math.tan(bf*D2R);y+=hh;pts.push([x,y]);if(i<n-1){x+=bw;pts.push([x,y])}}
+  pts.forEach(p=>c.lineTo(X(p[0]),Y(p[1])));[...pts].reverse().forEach(p=>c.lineTo(X(-p[0]),Y(p[1])));c.lineTo(X(e),Y(0));c.closePath();c.fill();c.stroke();
+  c.strokeStyle=css("--bad");c.setLineDash([4,3]);c.beginPath();c.moveTo(X(-half),Y(-6));c.lineTo(X(-half),Y(D*1.1));c.moveTo(X(half),Y(-6));c.lineTo(X(half),Y(D*1.1));c.stroke();c.setLineDash([]);
+  c.fillStyle=css("--muted");c.font="11.5px "+css("--body");c.textAlign="center";c.fillText("Lease boundary",X(-half)+38,14);c.fillText(`${b} m barrier`,X(-half)+(b*sc)/2+30,Y(0)-6);c.fillText(`${D} m deep · ${n} benches`,w/2,Y(D)+16)}
+["#qArea","#qPer","#qBar","#qDep","#qOb","#qSl","#qRho","#qRec","#qProd","#qBh","#qBw","#qBf"].forEach(id=>$(id).addEventListener("input",renderQuarry));
+$("#qMin").onchange=()=>{$("#qRho").value=$("#qMin").selectedOptions[0].dataset.d;renderQuarry()};
+function renderGrid(){const s=num("#qGs");let cut=0,fill=0,n=0;$("#qGrid").value.split(/\n/).forEach(l=>{const p=l.split(/[,\s;\t]+/).filter(Boolean).map(Number);if(p.length<2||p.some(v=>!isFinite(v)))return;const [b,a]=p.slice(-2);const d=(b-a)*s*s;d>0?cut+=d:fill-=d;n++});
+  const rho=num("#qRho");$("#qGOut").innerHTML=ro("Points",n)+ro("Cut (excavated)",fint(cut)+" <small>m³</small>",{hl:true})+ro("Fill",fint(fill)+" <small>m³</small>")+ro("Cut in brass",fint(cut/BRASS))+ro("Cut in tonnes (at "+rho+" t/m³)",fint(cut*rho))+ro("Area covered",fint(n*s*s)+" <small>m²</small>")}
+["#qGs","#qGrid","#qRho"].forEach(id=>$(id).addEventListener("input",renderGrid));
+RENDER.quarry=()=>{renderQuarry();renderGrid()};
+
+/* ============ SEISMIC ============ */
+function saG(T,soil){const k={1:[0.40,1.00,0.25],2:[0.55,1.36,0.34],3:[0.67,1.67,0.42]}[soil];if(T<=k[0])return 2.5;if(T<=4)return k[1]/T;return k[2]}
+function renderSeismic(){const Z=+$("#seZ").value,soil=+$("#seSoil").value,I=+$("#seI").value,R=+$("#seR").value,tt=$("#seT").value,h=num("#seH"),d=num("#seD"),W=num("#seW");
+  let T;if(tt==="rc")T=0.075*Math.pow(h,.75);else if(tt==="st")T=0.085*Math.pow(h,.75);else if(tt==="inf")T=0.09*h/Math.sqrt(d);else T=num("#seTm");
+  $("#seTm").disabled=tt!=="man";$("#seD").disabled=tt!=="inf";if(tt!=="man")$("#seTm").value=T.toFixed(3);
+  const sa=saG(T,soil);const Ah=Z/2*sa*I/R;const V=Ah*W;
+  $("#seOut").innerHTML=ro("Zone factor Z",Z.toFixed(2))+ro("Period T",fx(T,3)+" <small>s</small>")+ro("Sa / g",fx(sa,3))+ro("Ah",fx(Ah,4),{hl:true})+ro("Base shear VB = Ah·W",isFinite(V)?fint(V)+" <small>kN</small>":"—")+ro("Ah for slope work (Z/2)",fx(Z/2,3),{sz:17});
+  const xs=[],s1=[],s2=[],s3=[];for(let t=0;t<=4.5001;t+=0.02){xs.push(+t.toFixed(2));s1.push(saG(t,1));s2.push(saG(t,2));s3.push(saG(t,3))}
+  const cols=[css("--muted"),css("--accent2"),css("--accent")];
+  lineChart($("#seChart"),{xs,ymin:0,ymax:2.8,xmin:0,xmax:4.5,series:[{ys:s1,col:soil===1?css("--accent"):css("--line")},{ys:s2,col:soil===2?css("--accent"):css("--line")},{ys:s3,col:soil===3?css("--accent"):css("--line")}].map((s,i)=>i+1===soil?{...s,fill:true}:s),xlabel:"Period T (s)  ·  grey: other soil types",ylabel:"Sa / g",marker:{x:Math.min(T,4.5),y:sa,label:`T = ${fx(T,2)} s`}})}
+["#seZ","#seSoil","#seI","#seR","#seT","#seH","#seD","#seTm","#seW"].forEach(id=>$(id).addEventListener("input",renderSeismic));
+RENDER.seismic=renderSeismic;
+
+/* ============ SIEVE ============ */
+let sieve=store.get("sieve",[[4.75,25],[2.36,40],[1.18,60],[0.6,85],[0.425,45],[0.3,55],[0.15,90],[0.075,60],["Pan",40]]);
+function buildSieve(){$("#svTable tbody").innerHTML=sieve.map((r,i)=>`<tr data-i="${i}"><td>${r[0]==="Pan"?"Pan":`<input type="number" step="0.001" data-k="0" value="${r[0]}" aria-label="Sieve size">`}</td><td><input type="number" step="0.1" data-k="1" value="${r[1]??""}" aria-label="Value"></td><td class="n" data-o="p"></td></tr>`).join("");
+  $$("#svTable input").forEach(inp=>inp.addEventListener("input",()=>{const i=+inp.closest("tr").dataset.i;sieve[i][+inp.dataset.k]=inp.value===""?null:+inp.value;store.set("sieve",sieve);calcSieve()}));calcSieve()}
+$("#svAdd").onclick=()=>{sieve.splice(sieve.length-1,0,[null,null]);buildSieve()};
+function Dx(sz,pp,x){for(let i=0;i<sz.length-1;i++){if(pp[i]>=x&&pp[i+1]<=x&&pp[i]!==pp[i+1]){const l1=Math.log10(sz[i]),l2=Math.log10(sz[i+1]);return Math.pow(10,l2+(x-pp[i+1])/(pp[i]-pp[i+1])*(l1-l2))}}return NaN}
+function calcSieve(){const m=$("#svMode").value;const rows=sieve.filter(r=>r[0]!=="Pan"&&isFinite(r[0])&&r[0]>0&&r[1]!=null).sort((a,b)=>b[0]-a[0]);const pan=sieve.find(r=>r[0]==="Pan");
+  let pp;if(m==="mass"){const tot=rows.reduce((s,r)=>s+r[1],0)+((pan&&pan[1])||0);let cum=0;pp=rows.map(r=>{cum+=r[1];return 100-cum/tot*100})}else pp=rows.map(r=>r[1]);
+  const sz=rows.map(r=>r[0]);$$("#svTable tbody tr").forEach(tr=>{const r=sieve[+tr.dataset.i];const k=rows.indexOf(r);tr.querySelector('[data-o="p"]').textContent=k>=0?fx(pp[k],1):""});
+  const at=d=>{const i=sz.findIndex(s=>Math.abs(s-d)<1e-6);if(i>=0)return pp[i];return NaN};
+  const fines=at(0.075),p475=at(4.75);const gravel=isFinite(p475)?100-p475:NaN,sand=isFinite(p475)&&isFinite(fines)?p475-fines:NaN;
+  const D10=Dx(sz,pp,10),D30=Dx(sz,pp,30),D60=Dx(sz,pp,60);const Cu=D60/D10,Cc=D30*D30/(D10*D60);
+  const LL=num("#svLL"),PL=num("#svPL");const PI=LL-PL;const hasAtt=isFinite(LL)&&isFinite(PL);const aLine=0.73*(LL-20);
+  const plast=()=>{if(!hasAtt)return null;if(PI<4||PI<aLine)return "M";if(PI>7&&PI>=aLine)return "C";return "M-C"};
+  let grp="—",desc="";if(isFinite(fines)){
+    if(fines>=50){if(hasAtt){const L=LL<35?"L":LL<=50?"I":"H";const p=PI>=aLine&&PI>7?"C":"M";grp=p+L;desc=(p==="C"?"Clay":"Silt")+" of "+({L:"low",I:"intermediate",H:"high"}[L])+" compressibility"}else{grp="M or C";desc="Fine-grained: enter liquid and plastic limits"}}
+    else{const G=gravel>sand;const pre=G?"G":"S";const well=G?(Cu>4&&Cc>=1&&Cc<=3):(Cu>6&&Cc>=1&&Cc<=3);const base=pre+(well?"W":"P");const pl=plast();
+      if(fines<5){grp=base;desc=(well?"Well":"Poorly")+" graded "+(G?"gravel":"sand")}
+      else if(fines>12){grp=pl?(pl==="M-C"?pre+"M-"+pre+"C":pre+pl):pre+"M or "+pre+"C";desc=(G?"Gravel":"Sand")+" with "+(pl==="C"?"clay":pl==="M"?"silt":"silt or clay")+" fines"}
+      else{grp=base+"-"+pre+(pl==="C"?"C":"M");desc=(well?"Well":"Poorly")+" graded "+(G?"gravel":"sand")+" with some fines (dual symbol)"}}}
+  $("#svPill").textContent=grp;$("#svPill").className="pill ok";
+  // Folk & Ward: phi at x% coarser = size where %finer = 100-x
+  const ph=x=>{const d=Dx(sz,pp,100-x);return isFinite(d)?-Math.log2(d):NaN};const f5=ph(5),f16=ph(16),f25=ph(25),f50=ph(50),f75=ph(75),f84=ph(84),f95=ph(95);
+  const Mz=(f16+f50+f84)/3;const sI=(f84-f16)/4+(f95-f5)/6.6;const sk=(f16+f84-2*f50)/(2*(f84-f16))+(f5+f95-2*f50)/(2*(f95-f5));const KG=(f95-f5)/(2.44*(f75-f25));
+  const sortTxt=v=>!isFinite(v)?"":v<.35?"very well sorted":v<.5?"well sorted":v<.71?"moderately well sorted":v<1?"moderately sorted":v<2?"poorly sorted":v<4?"very poorly sorted":"extremely poorly sorted";
+  const sortSimple=(f84-f16)/2;
+  $("#svOut").innerHTML=ro("IS 1498 group",grp,{hl:true})+ro("Description",desc||"—",{sz:14})+ro("Gravel · sand · fines",`${fx(gravel,0)} · ${fx(sand,0)} · ${fx(fines,0)} <small>%</small>`,{sz:17})+ro("D10 · D30 · D60",`${fx(D10,3)} · ${fx(D30,3)} · ${fx(D60,3)} <small>mm</small>`,{sz:15})+ro("Cu",fx(Cu,2))+ro("Cc",fx(Cc,2))+(hasAtt?ro("PI · A-line PI",fx(PI,0)+" · "+fx(aLine,0)):"")+
+    ro("Graphic mean Mz",fx(Mz,2)+" <small>φ</small>")+ro("Sorting",isFinite(sI)?fx(sI,2)+" <small>φ · "+sortTxt(sI)+"</small>":isFinite(sortSimple)?fx(sortSimple,2)+" <small>φ (φ16–φ84 only)</small>":"—",{sz:16})+ro("Skewness · kurtosis",isFinite(sk)?fx(sk,2)+" · "+fx(KG,2):"<small>needs data from 5 % to 95 %</small>",{sz:16});
+  lineChart($("#svChart"),{xs:sz,xlog:true,xmin:0.01,xmax:100,xticks:[0.01,0.075,0.425,2,4.75,20,100],ymin:0,ymax:100,series:[{ys:pp,col:css("--accent"),dots:true}],xlabel:"Particle size (mm, log scale)",ylabel:"% passing",
+    vbands:[{x0:0.01,x1:0.075,label:"Silt + clay",col:css("--muted")},{x0:0.075,x1:4.75,label:"Sand",col:css("--accent2")},{x0:4.75,x1:80,label:"Gravel",col:css("--accent")}]})}
+["#svMode","#svLL","#svPL"].forEach(id=>$(id).addEventListener("input",calcSieve));
+RENDER.sieve=()=>{if(!$("#svTable tbody").children.length)buildSieve();else calcSieve()};
+
+/* ============ UNITS ============ */
+const UNITS={
+ "Length":{m:["metre",1],mm:["millimetre",.001],cm:["centimetre",.01],km:["kilometre",1000],in:["inch",.0254],ft:["foot",.3048],yd:["yard",.9144],mi:["mile",1609.344],nmi:["nautical mile",1852],ch:["chain (Gunter's)",20.1168]},
+ "Area":{m2:["square metre",1],ha:["hectare",1e4],km2:["square km",1e6],ac:["acre",4046.8564224],gunta:["gunta / guntha (1/40 acre)",101.17141056],cent:["cent (1/100 acre)",40.468564224],ft2:["square foot",.09290304],yd2:["square yard (gaj)",.83612736]},
+ "Volume":{m3:["cubic metre",1],L:["litre",.001],cft:["cubic foot (cft)",.028316846592],brass:["brass (100 cft)",BRASS],yd3:["cubic yard",.764554857984],gal:["US gallon",.003785411784],bbl:["oil barrel",.158987294928]},
+ "Mass":{kg:["kilogram",1],g:["gram",.001],q:["quintal",100],t:["tonne",1000],lb:["pound",.45359237],st:["short ton",907.18474],lt:["long ton",1016.0469088],ozt:["troy ounce",.0311034768],tola:["tola (11.664 g)",.0116638038]},
+ "Pressure / stress":{kPa:["kilopascal",1e3],Pa:["pascal",1],MPa:["megapascal",1e6],bar:["bar",1e5],ksc:["kg/cm²",98066.5],psi:["psi",6894.757293168],atm:["atmosphere",101325],tm2:["t/m²",9806.65]},
+ "Density":{tm3:["t/m³ = g/cm³",1000],kgm3:["kg/m³",1],pcf:["lb/ft³",16.01846337]},
+ "Grade":{gt:["g/t",1],ppm:["ppm",1],ppb:["ppb",.001],pct:["%",1e4],oztm:["troy oz / tonne",31.1034768],ozst:["troy oz / short ton",34.2857142857]},
+ "Temperature":{C:["°C"],F:["°F"],K:["kelvin"]}
+};
+$("#uCat").innerHTML=Object.keys(UNITS).map(k=>`<option>${k}</option>`).join("");
+function fillUnits(){const u=UNITS[$("#uCat").value];$("#uFrom").innerHTML=Object.entries(u).map(([k,v])=>`<option value="${k}">${v[0]}</option>`).join("");renderUnits()}
+const fmtU=v=>{if(!isFinite(v))return "—";const a=Math.abs(v);if(a!==0&&(a<1e-4||a>=1e9))return v.toExponential(4);return v.toLocaleString("en-IN",{maximumSignificantDigits:7})};
+function renderUnits(){const cat=$("#uCat").value,u=UNITS[cat],from=$("#uFrom").value,v=num("#uVal");let rows;
+  if(cat==="Temperature"){const C=from==="C"?v:from==="F"?(v-32)*5/9:v-273.15;rows=[["°C",C],["°F",C*9/5+32],["kelvin",C+273.15]]}
+  else{const base=v*u[from][1];rows=Object.entries(u).map(([k,x])=>[x[0],base/x[1],k===from])}
+  $("#uTable tbody").innerHTML=rows.map(r=>`<tr${r[2]?' style="font-weight:600"':""}><td>${r[0]}</td><td class="n">${fmtU(r[1])}</td></tr>`).join("")}
+$("#uCat").onchange=fillUnits;["#uVal","#uFrom"].forEach(id=>$(id).addEventListener("input",renderUnits));
+function slopeFrom(src){let d;if(src==="deg")d=num("#slDeg");if(src==="pct")d=Math.atan(num("#slPct")/100)*R2D;if(src==="hv")d=Math.atan(1/num("#slHV"))*R2D;if(!isFinite(d))return;
+  if(src!=="deg")$("#slDeg").value=+d.toFixed(2);if(src!=="pct")$("#slPct").value=+(Math.tan(d*D2R)*100).toFixed(2);if(src!=="hv")$("#slHV").value=+(1/Math.tan(d*D2R)).toFixed(3)}
+$("#slDeg").oninput=()=>slopeFrom("deg");$("#slPct").oninput=()=>slopeFrom("pct");$("#slHV").oninput=()=>slopeFrom("hv");
+function renderGT(){const t=num("#gtT"),g=num("#gtG"),r=num("#gtRec")/100;const grams=t*g;$("#gtOut").innerHTML=ro("Contained metal",fint(grams)+" <small>g</small>")+ro("Contained",fx(grams/31.1034768,0)+" <small>troy oz</small>")+ro("Recovered",fx(grams*r/1000,2)+" <small>kg</small>",{hl:true})+ro("Recovered",fx(grams*r/11.6638038,0)+" <small>tola</small>")}
+["#gtT","#gtG","#gtRec"].forEach(id=>$(id).addEventListener("input",renderGT));
+RENDER.units=()=>{if(!$("#uFrom").options.length)fillUnits();slopeFrom("deg");renderGT()};
+
+/* ============ boot ============ */
+route();
+if("serviceWorker" in navigator&&location.protocol==="https:"&&!/claude|anthropic/.test(location.hostname)){navigator.serviceWorker.register("sw.js").catch(()=>{})}
+</script>
+</body>
+</html>
